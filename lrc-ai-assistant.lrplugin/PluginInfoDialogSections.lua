@@ -3,6 +3,11 @@ local LrDialogs = import 'LrDialogs'
 local LrTasks = import 'LrTasks'
 local LrShell = import 'LrShell'
 local LrColor = import 'LrColor'
+local Defaults = require 'Defaults'
+local PromptConfigProvider = require 'PromptConfigProvider'
+local KeywordConfigProvider = require 'KeywordConfigProvider'
+local UpdateCheck = require 'UpdateCheck'
+local Util = require 'Util'
 
 PluginInfoDialogSections = {}
 
