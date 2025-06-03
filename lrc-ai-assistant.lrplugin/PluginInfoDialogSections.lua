@@ -6,6 +6,8 @@ function PluginInfoDialogSections.startDialog(propertyTable)
     propertyTable.perfLogging = prefs.perfLogging
     propertyTable.geminiApiKey = prefs.geminiApiKey
     propertyTable.chatgptApiKey = prefs.chatgptApiKey
+    propertyTable.assistantId = prefs.assistantId  -- NEW: Assistant ID
+    propertyTable.enableBatchProcessing = prefs.enableBatchProcessing  -- NEW: Enable batch
     propertyTable.generateTitle = prefs.generateTitle
     propertyTable.generateCaption = prefs.generateCaption
     propertyTable.generateKeywords = prefs.generateKeywords
@@ -182,6 +184,32 @@ function PluginInfoDialogSections.sectionsForTopOfDialog(f, propertyTable)
                         value = bind 'chatgptApiKey',
                         width = share 'inputWidth',
                         width_in_chars = 40,
+                    },
+                },
+                -- NEW: Assistant ID field for batch processing
+                f:row {
+                    f:static_text {
+                        title = "Assistant ID (for batch)",
+                        width = share 'labelWidth'
+                    },
+                    f:edit_field {
+                        value = bind 'assistantId',
+                        width = share 'inputWidth',
+                        width_in_chars = 40,
+                        tooltip = "OpenAI Assistant ID (starts with 'asst_') for batch processing. Create at platform.openai.com/assistants",
+                    },
+                },
+                f:row {
+                    f:static_text {
+                        title = "",
+                        width = share 'labelWidth'
+                    },
+                    f:checkbox {
+                        value = bind 'enableBatchProcessing',
+                        width = share 'checkboxWidth'
+                    },
+                    f:static_text {
+                        title = "Enable batch processing with Assistant API",
                     },
                 },
             },
@@ -438,6 +466,8 @@ end
 function PluginInfoDialogSections.endDialog(propertyTable)
     prefs.geminiApiKey = propertyTable.geminiApiKey
     prefs.chatgptApiKey = propertyTable.chatgptApiKey
+    prefs.assistantId = propertyTable.assistantId  -- NEW: Save Assistant ID
+    prefs.enableBatchProcessing = propertyTable.enableBatchProcessing  -- NEW: Save batch setting
     prefs.generateCaption = propertyTable.generateCaption
     prefs.generateTitle = propertyTable.generateTitle
     prefs.generateKeywords = propertyTable.generateKeywords
@@ -482,4 +512,3 @@ function PluginInfoDialogSections.endDialog(propertyTable)
 
     prefs.perfLogging = propertyTable.perfLogging
 end
-
