@@ -1,0 +1,338 @@
+--[[
+AssistantAPI.lua - OpenAI Assistant API integration for Lightroom
+Handles batch processing of multiple images with persistent context
+]]--
+
+local LrHttp = import 'LrHttp'
+local LrPathUtils = import 'LrPathUtils'
+local LrFileUtils = import 'LrFileUtils'
+local LrErrors = import 'LrErrors'
+local LrFunctionContext = import 'LrFunctionContext'
+local LrProgressScope = import 'LrProgressScope'
+local JSON = require 'JSON'
+
+local AssistantAPI = {}
+
+-- Configuration
+local OPENAI_API_BASE = "https://api.openai.com/v1"
+local MAX_FILE_SIZE = 20 * 1024 * 1024 -- 20MB limit for OpenAI
+
+-- Initialize Assistant API with settings
+function AssistantAPI.initialize(apiKey, assistantId)
+    AssistantAPI.apiKey = apiKey
+    AssistantAPI.assistantId = assistantId
+    AssistantAPI.headers = {
+        { field = "Authorization", value = "Bearer " .. apiKey },
+        { field = "Content-Type", value = "application/json" },
+        { field = "OpenAI-Beta", value = "assistants=v2" }
+    }
+end
+
+-- Create a new thread for batch processing
+function AssistantAPI.createThread()
+    local url = OPENAI_API_BASE .. "/threads"
+    local body = JSON:encode({})
+    
+    local response, headers = LrHttp.post(url, body, AssistantAPI.headers)
+    
+    if headers.status == 200 then
+        local threadData = JSON:decode(response)
+        return threadData.id
+    else
+        LrErrors.throwUserError("Failed to create Assistant thread: " .. (response or "Unknown error"))
+    end
+end
+
+-- Upload image file to OpenAI
+function AssistantAPI.uploadFile(filePath)
+    local fileSize = LrFileUtils.fileAttributes(filePath).fileSize
+    if fileSize > MAX_FILE_SIZE then
+        LrErrors.throwUserError("Image file too large: " .. filePath)
+    end
+    
+    -- Read file as binary data
+    local file = io.open(filePath, "rb")
+    if not file then
+        LrErrors.throwUserError("Cannot read file: " .. filePath)
+    end
+    
+    local fileData = file:read("*all")
+    file:close()
+    
+    -- Prepare multipart form data
+    local boundary = "----LightroomAssistantUpload" .. os.time()
+    local body = "--" .. boundary .. "\r\n"
+    body = body .. "Content-Disposition: form-data; name=\"purpose\"\r\n\r\n"
+    body = body .. "vision\r\n"
+    body = body .. "--" .. boundary .. "\r\n"
+    body = body .. "Content-Disposition: form-data; name=\"file\"; filename=\"" .. LrPathUtils.leafName(filePath) .. "\"\r\n"
+    body = body .. "Content-Type: image/jpeg\r\n\r\n"
+    body = body .. fileData .. "\r\n"
+    body = body .. "--" .. boundary .. "--\r\n"
+    
+    local uploadHeaders = {
+        { field = "Authorization", value = "Bearer " .. AssistantAPI.apiKey },
+        { field = "Content-Type", value = "multipart/form-data; boundary=" .. boundary }
+    }
+    
+    local response, headers = LrHttp.post(OPENAI_API_BASE .. "/files", body, uploadHeaders)
+    
+    if headers.status == 200 then
+        local fileData = JSON:decode(response)
+        return fileData.id
+    else
+        LrErrors.throwUserError("Failed to upload file: " .. (response or "Unknown error"))
+    end
+end
+
+-- Add message with images to thread
+function AssistantAPI.addMessage(threadId, content, fileIds)
+    local messageContent = {}
+    
+    -- Add text content
+    table.insert(messageContent, {
+        type = "text",
+        text = content
+    })
+    
+    -- Add image files
+    if fileIds then
+        for _, fileId in ipairs(fileIds) do
+            table.insert(messageContent, {
+                type = "image_file",
+                image_file = {
+                    file_id = fileId
+                }
+            })
+        end
+    end
+    
+    local body = JSON:encode({
+        role = "user",
+        content = messageContent
+    })
+    
+    local url = OPENAI_API_BASE .. "/threads/" .. threadId .. "/messages"
+    local response, headers = LrHttp.post(url, body, AssistantAPI.headers)
+    
+    if headers.status == 200 then
+        local messageData = JSON:decode(response)
+        return messageData.id
+    else
+        LrErrors.throwUserError("Failed to add message: " .. (response or "Unknown error"))
+    end
+end
+
+-- Run assistant on thread
+function AssistantAPI.runAssistant(threadId, instructions)
+    local body = JSON:encode({
+        assistant_id = AssistantAPI.assistantId,
+        instructions = instructions
+    })
+    
+    local url = OPENAI_API_BASE .. "/threads/" .. threadId .. "/runs"
+    local response, headers = LrHttp.post(url, body, AssistantAPI.headers)
+    
+    if headers.status == 200 then
+        local runData = JSON:decode(response)
+        return runData.id
+    else
+        LrErrors.throwUserError("Failed to run assistant: " .. (response or "Unknown error"))
+    end
+end
+
+-- Poll for run completion
+function AssistantAPI.waitForCompletion(threadId, runId, progressScope)
+    local maxAttempts = 60 -- 5 minutes max
+    local attempt = 0
+    
+    while attempt < maxAttempts do
+        if progressScope then
+            progressScope:setCaption("Processing with AI Assistant... (attempt " .. (attempt + 1) .. ")")
+        end
+        
+        local url = OPENAI_API_BASE .. "/threads/" .. threadId .. "/runs/" .. runId
+        local response, headers = LrHttp.get(url, AssistantAPI.headers)
+        
+        if headers.status == 200 then
+            local runData = JSON:decode(response)
+            
+            if runData.status == "completed" then
+                return true
+            elseif runData.status == "failed" or runData.status == "cancelled" or runData.status == "expired" then
+                LrErrors.throwUserError("Assistant run failed: " .. runData.status)
+            end
+        end
+        
+        -- Wait 5 seconds before next check
+        LrTasks.sleep(5)
+        attempt = attempt + 1
+    end
+    
+    LrErrors.throwUserError("Assistant run timed out")
+end
+
+-- Get messages from thread
+function AssistantAPI.getMessages(threadId)
+    local url = OPENAI_API_BASE .. "/threads/" .. threadId .. "/messages"
+    local response, headers = LrHttp.get(url, AssistantAPI.headers)
+    
+    if headers.status == 200 then
+        local messagesData = JSON:decode(response)
+        return messagesData.data
+    else
+        LrErrors.throwUserError("Failed to get messages: " .. (response or "Unknown error"))
+    end
+end
+
+-- Main batch processing function
+function AssistantAPI.processBatch(selectedPhotos, progressScope)
+    local results = {}
+    
+    LrFunctionContext.callWithContext("AssistantAPI.processBatch", function(context)
+        -- Create thread
+        if progressScope then progressScope:setCaption("Creating AI session...") end
+        local threadId = AssistantAPI.createThread()
+        
+        -- Export and upload images
+        local fileIds = {}
+        for i, photo in ipairs(selectedPhotos) do
+            if progressScope then 
+                progressScope:setCaption("Uploading image " .. i .. " of " .. #selectedPhotos)
+                progressScope:setPortionComplete(i / (#selectedPhotos * 2)) -- First half for upload
+            end
+            
+            -- Export photo to temporary file
+            local tempPath = AssistantAPI.exportTempImage(photo)
+            
+            -- Upload to OpenAI
+            local fileId = AssistantAPI.uploadFile(tempPath)
+            table.insert(fileIds, fileId)
+            
+            -- Clean up temp file
+            LrFileUtils.delete(tempPath)
+        end
+        
+        -- Create batch processing prompt
+        local prompt = AssistantAPI.createBatchPrompt(selectedPhotos)
+        
+        -- Add message with all images
+        if progressScope then progressScope:setCaption("Sending images to AI Assistant...") end
+        AssistantAPI.addMessage(threadId, prompt, fileIds)
+        
+        -- Run assistant
+        local runId = AssistantAPI.runAssistant(threadId, "Process this batch of related images and generate consistent metadata for each one.")
+        
+        -- Wait for completion
+        AssistantAPI.waitForCompletion(threadId, runId, progressScope)
+        
+        -- Get results
+        if progressScope then progressScope:setCaption("Retrieving AI analysis...") end
+        local messages = AssistantAPI.getMessages(threadId)
+        
+        -- Parse results for each photo
+        results = AssistantAPI.parseMetadataResults(messages, selectedPhotos)
+        
+        if progressScope then progressScope:setPortionComplete(1.0) end
+    end)
+    
+    return results
+end
+
+-- Export photo to temporary file for upload
+function AssistantAPI.exportTempImage(photo)
+    local tempDir = LrPathUtils.getStandardFilePath("temp")
+    local tempName = "lr_assistant_" .. os.time() .. "_" .. math.random(1000, 9999) .. ".jpg"
+    local tempPath = LrPathUtils.child(tempDir, tempName)
+    
+    -- Export settings for API upload
+    local exportSettings = {
+        LR_size = "1024", -- Reasonable size for analysis
+        LR_format = "JPEG",
+        LR_jpeg_quality = 0.8,
+        LR_export_destinationType = "specificFolder",
+        LR_export_destinationPath = tempDir,
+        LR_export_useSubfolder = false,
+        LR_renamingTokensOn = true,
+        LR_tokens = tempName:gsub("%.jpg$", ""),
+        LR_tokenCustomString = "",
+        LR_collisionHandling = "overwrite"
+    }
+    
+    -- Perform export
+    local exportSession = LrExportSession({
+        photosToExport = { photo },
+        exportSettings = exportSettings
+    })
+    
+    exportSession:doExportOnCurrentTask()
+    
+    return tempPath
+end
+
+-- Create batch processing prompt
+function AssistantAPI.createBatchPrompt(selectedPhotos)
+    local prompt = "I'm uploading " .. #selectedPhotos .. " related images for batch processing. "
+    prompt = prompt .. "Please analyze all images together and generate consistent metadata for each one. "
+    prompt = prompt .. "Consider the relationships between images and maintain thematic consistency. "
+    prompt = prompt .. "\n\nFor each image, provide:\n"
+    prompt = prompt .. "1. Title\n"
+    prompt = prompt .. "2. Caption/Description\n"
+    prompt = prompt .. "3. Keywords (hierarchical)\n"
+    prompt = prompt .. "4. Alt Text\n\n"
+    prompt = prompt .. "Format your response as JSON with an array of metadata objects, one for each image in order."
+    
+    return prompt
+end
+
+-- Parse AI response into metadata for each photo
+function AssistantAPI.parseMetadataResults(messages, selectedPhotos)
+    local results = {}
+    
+    -- Find the assistant's response (first message from assistant)
+    local assistantResponse = nil
+    for _, message in ipairs(messages) do
+        if message.role == "assistant" then
+            assistantResponse = message
+            break
+        end
+    end
+    
+    if not assistantResponse then
+        LrErrors.throwUserError("No response from AI Assistant")
+    end
+    
+    -- Extract text content
+    local responseText = ""
+    for _, content in ipairs(assistantResponse.content) do
+        if content.type == "text" then
+            responseText = responseText .. content.text.value
+        end
+    end
+    
+    -- Try to parse JSON response
+    local success, metadata = pcall(JSON.decode, JSON, responseText)
+    if not success then
+        -- Fallback: extract JSON from response text
+        local jsonStart = responseText:find("%[")
+        local jsonEnd = responseText:find("%]", jsonStart)
+        if jsonStart and jsonEnd then
+            local jsonText = responseText:sub(jsonStart, jsonEnd)
+            success, metadata = pcall(JSON.decode, JSON, jsonText)
+        end
+    end
+    
+    if success and type(metadata) == "table" then
+        for i, photo in ipairs(selectedPhotos) do
+            if metadata[i] then
+                results[photo] = metadata[i]
+            end
+        end
+    else
+        LrErrors.throwUserError("Could not parse AI response: " .. responseText)
+    end
+    
+    return results
+end
+
+return AssistantAPI
