@@ -1,3 +1,9 @@
+local LrView = import 'LrView'
+local LrDialogs = import 'LrDialogs'
+local LrTasks = import 'LrTasks'
+local LrShell = import 'LrShell'
+local LrColor = import 'LrColor'
+
 PluginInfoDialogSections = {}
 
 function PluginInfoDialogSections.startDialog(propertyTable)

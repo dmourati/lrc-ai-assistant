@@ -4,6 +4,7 @@ Extends existing plugin with Assistant API batch capabilities
 ]]--
 
 local LrTasks = import 'LrTasks'
+local LrFunctionContext = import 'LrFunctionContext'
 local LrProgressScope = import 'LrProgressScope'
 local LrDialogs = import 'LrDialogs'
 local LrApplication = import 'LrApplication'
@@ -16,8 +17,8 @@ local BatchProcessor = {}
 
 -- Initialize batch processor with settings
 function BatchProcessor.initialize(prefs)
-    local apiKey = prefs.openai_api_key
-    local assistantId = prefs.assistant_id
+    local apiKey = prefs.chatgptApiKey  -- Use existing ChatGPT API key
+    local assistantId = prefs.assistantId
     
     if not apiKey or apiKey == "" then
         LrErrors.throwUserError("OpenAI API key not configured. Please set it in Plugin Manager.")
@@ -73,13 +74,14 @@ function BatchProcessor.processBatchSelection()
             return
         end
         
-        -- Process with progress dialog
-        LrProgressScope.createProgressScope({
-            title = "AI Assistant Batch Processing",
-            functionContext = function(progressScope)
-                BatchProcessor.processBatchWithProgress(selectedPhotos, progressScope)
-            end
-        })
+        -- Process with progress dialog using correct LrFunctionContext pattern
+        LrFunctionContext.callWithContext("Batch Processing", function(context)
+            local progressScope = LrProgressScope({
+                title = "AI Assistant Batch Processing",
+                functionContext = context
+            })
+            BatchProcessor.processBatchWithProgress(selectedPhotos, progressScope)
+        end)
     end)
 end
 
@@ -185,98 +187,14 @@ function BatchProcessor.shouldUpdateField(fieldType, currentValue)
     local prefs = BatchProcessor.prefs
     
     -- Check if review mode is enabled for this field
-    local reviewPref = "review_" .. fieldType
+    local reviewPref = "review" .. fieldType:gsub("^%l", string.upper)  -- Convert to camelCase
     if prefs[reviewPref] then
         -- In review mode, only update if field is empty
         return not currentValue or currentValue == ""
     end
     
-    -- Check if overwrite is enabled for this field
-    local overwritePref = "overwrite_" .. fieldType
-    if prefs[overwritePref] then
-        return true
-    end
-    
     -- Default: only update empty fields
     return not currentValue or currentValue == ""
-end
-
--- Settings dialog for batch processing
-function BatchProcessor.showSettingsDialog()
-    local f = LrView.osFactory()
-    local bind = LrView.bind
-    local share = LrView.share
-    
-    local props = LrBinding.makePropertyTable()
-    props.assistant_id = _PLUGIN.preferences.assistant_id or ""
-    props.batch_prompt_template = _PLUGIN.preferences.batch_prompt_template or 
-        "Analyze these related images and generate consistent metadata that tells their story as a cohesive set."
-    props.max_batch_size = _PLUGIN.preferences.max_batch_size or 20
-    props.include_context_review = _PLUGIN.preferences.include_context_review or false
-    
-    local contents = f:column {
-        spacing = f:control_spacing(),
-        
-        f:group_box {
-            title = "Assistant Configuration",
-            f:row {
-                f:static_text {
-                    title = "Assistant ID:",
-                    width = share 'label_width'
-                },
-                f:edit_field {
-                    value = bind 'assistant_id',
-                    width_in_chars = 40,
-                    tooltip = "Your OpenAI Assistant ID (starts with 'asst_')"
-                }
-            }
-        },
-        
-        f:group_box {
-            title = "Batch Processing",
-            f:row {
-                f:static_text {
-                    title = "Max Batch Size:",
-                    width = share 'label_width'
-                },
-                f:edit_field {
-                    value = bind 'max_batch_size',
-                    width_in_chars = 5,
-                    tooltip = "Maximum number of photos to process in one batch"
-                }
-            },
-            f:row {
-                f:checkbox {
-                    title = "Show context review dialog",
-                    value = bind 'include_context_review',
-                    tooltip = "Allow reviewing and editing context before processing"
-                }
-            }
-        },
-        
-        f:group_box {
-            title = "Batch Prompt Template",
-            f:edit_field {
-                value = bind 'batch_prompt_template',
-                height_in_lines = 4,
-                width_in_chars = 60,
-                tooltip = "Template for batch processing instructions"
-            }
-        }
-    }
-    
-    local result = LrDialogs.presentModalDialog {
-        title = "AI Assistant Batch Settings",
-        contents = contents,
-        actionVerb = "Save"
-    }
-    
-    if result == "ok" then
-        _PLUGIN.preferences.assistant_id = props.assistant_id
-        _PLUGIN.preferences.batch_prompt_template = props.batch_prompt_template
-        _PLUGIN.preferences.max_batch_size = props.max_batch_size
-        _PLUGIN.preferences.include_context_review = props.include_context_review
-    end
 end
 
 return BatchProcessor
