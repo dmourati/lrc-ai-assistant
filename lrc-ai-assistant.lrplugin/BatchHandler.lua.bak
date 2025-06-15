@@ -1,0 +1,297 @@
+local LrTasks = import 'LrTasks'
+local LrDialogs = import 'LrDialogs'
+local LrApplication = import 'LrApplication'
+local LrHttp = import 'LrHttp'
+local LrFileUtils = import 'LrFileUtils'
+local LrPathUtils = import 'LrPathUtils'
+local LrExportSession = import 'LrExportSession'
+local LrProgressScope = import 'LrProgressScope'
+local LrFunctionContext = import 'LrFunctionContext'
+
+-- Configuration with your Assistant ID
+local ASSISTANT_ID = "asst_HQan3G9EY0pDEpFaQG97idQL"
+local OPENAI_API_BASE = "https://api.openai.com/v1"
+
+local function createThread(apiKey)
+    local headers = {
+        { field = "Authorization", value = "Bearer " .. apiKey },
+        { field = "Content-Type", value = "application/json" },
+        { field = "OpenAI-Beta", value = "assistants=v2" }
+    }
+    
+    local response, responseHeaders = LrHttp.post(OPENAI_API_BASE .. "/threads", "{}", headers)
+    
+    if responseHeaders.status == 200 then
+        local threadData = JSON:decode(response)
+        return threadData.id
+    else
+        error("Failed to create thread: " .. (response or "Unknown error"))
+    end
+end
+
+local function exportTempImage(photo)
+    -- Use Desktop folder which should always exist
+    local desktopPath = LrPathUtils.getStandardFilePath("desktop")
+    local tempName = "lr_batch_" .. os.time() .. "_" .. math.random(1000, 9999) .. ".jpg"
+    
+    -- Simple export settings
+    local exportSettings = {
+        LR_format = "JPEG",
+        LR_jpeg_quality = 0.8,
+        LR_size = "1024",
+        LR_export_destinationType = "specificFolder",
+        LR_export_destinationPath = desktopPath,
+        LR_export_useSubfolder = false,
+        LR_renamingTokensOn = true,
+        LR_tokens = tempName:gsub("%.jpg$", ""),
+        LR_collisionHandling = "overwrite"
+    }
+    
+    local exportSession = LrExportSession({
+        photosToExport = { photo },
+        exportSettings = exportSettings
+    })
+    
+    exportSession:doExportOnCurrentTask()
+    
+    -- Return the full path to the exported file
+    return LrPathUtils.child(desktopPath, tempName)
+end
+
+local function uploadFile(filePath, apiKey)
+    -- Check if file exists
+    if not LrFileUtils.exists(filePath) then
+        error("Exported file not found: " .. filePath)
+    end
+    
+    local fileSize = LrFileUtils.fileAttributes(filePath).fileSize
+    if fileSize > 20 * 1024 * 1024 then  -- 20MB limit
+        error("Image file too large: " .. filePath)
+    end
+    
+    local file = io.open(filePath, "rb")
+    if not file then
+        error("Cannot read file: " .. filePath)
+    end
+    
+    local fileData = file:read("*all")
+    file:close()
+    
+    local boundary = "----LightroomBatchUpload" .. os.time()
+    local body = "--" .. boundary .. "\r\n"
+    body = body .. "Content-Disposition: form-data; name=\"purpose\"\r\n\r\n"
+    body = body .. "vision\r\n"
+    body = body .. "--" .. boundary .. "\r\n"
+    body = body .. "Content-Disposition: form-data; name=\"file\"; filename=\"" .. LrPathUtils.leafName(filePath) .. "\"\r\n"
+    body = body .. "Content-Type: image/jpeg\r\n\r\n"
+    body = body .. fileData .. "\r\n"
+    body = body .. "--" .. boundary .. "--\r\n"
+    
+    local headers = {
+        { field = "Authorization", value = "Bearer " .. apiKey },
+        { field = "Content-Type", value = "multipart/form-data; boundary=" .. boundary }
+    }
+    
+    local response, responseHeaders = LrHttp.post(OPENAI_API_BASE .. "/files", body, headers)
+    
+    if responseHeaders.status == 200 then
+        local fileData = JSON:decode(response)
+        return fileData.id
+    else
+        error("Failed to upload file: " .. (response or "Unknown error"))
+    end
+end
+
+local function addMessage(threadId, content, fileIds, apiKey)
+    local messageContent = {{ type = "text", text = content }}
+    
+    if fileIds then
+        for _, fileId in ipairs(fileIds) do
+            table.insert(messageContent, {
+                type = "image_file",
+                image_file = { file_id = fileId }
+            })
+        end
+    end
+    
+    local body = JSON:encode({
+        role = "user",
+        content = messageContent
+    })
+    
+    local headers = {
+        { field = "Authorization", value = "Bearer " .. apiKey },
+        { field = "Content-Type", value = "application/json" },
+        { field = "OpenAI-Beta", value = "assistants=v2" }
+    }
+    
+    local response, responseHeaders = LrHttp.post(OPENAI_API_BASE .. "/threads/" .. threadId .. "/messages", body, headers)
+    
+    if responseHeaders.status == 200 then
+        local messageData = JSON:decode(response)
+        return messageData.id
+    else
+        error("Failed to add message: " .. (response or "Unknown error"))
+    end
+end
+
+local function runAssistant(threadId, apiKey)
+    local body = JSON:encode({
+        assistant_id = ASSISTANT_ID,
+        instructions = "Analyze these related images and generate consistent metadata. Respond with JSON array containing title, caption, keywords, and alt_text for each image in order."
+    })
+    
+    local headers = {
+        { field = "Authorization", value = "Bearer " .. apiKey },
+        { field = "Content-Type", value = "application/json" },
+        { field = "OpenAI-Beta", value = "assistants=v2" }
+    }
+    
+    local response, responseHeaders = LrHttp.post(OPENAI_API_BASE .. "/threads/" .. threadId .. "/runs", body, headers)
+    
+    if responseHeaders.status == 200 then
+        local runData = JSON:decode(response)
+        return runData.id
+    else
+        error("Failed to run assistant: " .. (response or "Unknown error"))
+    end
+end
+
+local function waitForCompletion(threadId, runId, apiKey, progressScope)
+    local maxAttempts = 60
+    local attempt = 0
+    
+    local headers = {
+        { field = "Authorization", value = "Bearer " .. apiKey },
+        { field = "OpenAI-Beta", value = "assistants=v2" }
+    }
+    
+    while attempt < maxAttempts do
+        if progressScope then
+            progressScope:setCaption("Processing with AI Assistant... (attempt " .. (attempt + 1) .. ")")
+        end
+        
+        local response, responseHeaders = LrHttp.get(OPENAI_API_BASE .. "/threads/" .. threadId .. "/runs/" .. runId, headers)
+        
+        if responseHeaders.status == 200 then
+            local runData = JSON:decode(response)
+            
+            if runData.status == "completed" then
+                return true
+            elseif runData.status == "failed" or runData.status == "cancelled" or runData.status == "expired" then
+                error("Assistant run failed: " .. runData.status)
+            end
+        end
+        
+        LrTasks.sleep(5)
+        attempt = attempt + 1
+    end
+    
+    error("Assistant run timed out")
+end
+
+local function getMessages(threadId, apiKey)
+    local headers = {
+        { field = "Authorization", value = "Bearer " .. apiKey },
+        { field = "OpenAI-Beta", value = "assistants=v2" }
+    }
+    
+    local response, responseHeaders = LrHttp.get(OPENAI_API_BASE .. "/threads/" .. threadId .. "/messages", headers)
+    
+    if responseHeaders.status == 200 then
+        local messagesData = JSON:decode(response)
+        return messagesData.data
+    else
+        error("Failed to get messages: " .. (response or "Unknown error"))
+    end
+end
+
+local function processBatch(selectedPhotos, apiKey)
+    LrFunctionContext.callWithContext("Batch Processing", function(context)
+        local progressScope = LrProgressScope({
+            title = "AI Assistant Batch Processing",
+            functionContext = context
+        })
+        
+        progressScope:setCaption("Creating AI thread...")
+        local threadId = createThread(apiKey)
+        
+        progressScope:setCaption("Exporting and uploading images...")
+        local fileIds = {}
+        local tempFiles = {}
+        
+        for i, photo in ipairs(selectedPhotos) do
+            progressScope:setCaption("Exporting image " .. i .. " of " .. #selectedPhotos)
+            progressScope:setPortionComplete(i / (#selectedPhotos * 3))
+            
+            local tempPath = exportTempImage(photo)
+            table.insert(tempFiles, tempPath)
+            
+            progressScope:setCaption("Uploading image " .. i .. " of " .. #selectedPhotos)
+            progressScope:setPortionComplete((#selectedPhotos + i) / (#selectedPhotos * 3))
+            
+            local fileId = uploadFile(tempPath, apiKey)
+            table.insert(fileIds, fileId)
+        end
+        
+        progressScope:setCaption("Sending to AI Assistant...")
+        local prompt = "I'm uploading " .. #selectedPhotos .. " related images for batch analysis. Please analyze all images together and generate consistent metadata for each one. For each image, provide: title, caption, keywords (as array), and alt_text. Respond with a JSON array of objects, one for each image in order."
+        
+        addMessage(threadId, prompt, fileIds, apiKey)
+        
+        progressScope:setCaption("Running AI analysis...")
+        local runId = runAssistant(threadId, apiKey)
+        
+        waitForCompletion(threadId, runId, apiKey, progressScope)
+        
+        progressScope:setCaption("Getting results...")
+        local messages = getMessages(threadId, apiKey)
+        
+        -- Clean up temp files from Desktop
+        for _, tempFile in ipairs(tempFiles) do
+            if LrFileUtils.exists(tempFile) then
+                LrFileUtils.delete(tempFile)
+            end
+        end
+        
+        progressScope:setCaption("Complete!")
+        progressScope:setPortionComplete(1.0)
+        
+        LrDialogs.message("Batch Processing Complete!", 
+            "Successfully processed " .. #selectedPhotos .. " photos with AI Assistant.\n\n" ..
+            "Results received from Assistant API.\n" ..
+            "Temp files cleaned up from Desktop.", "info")
+    end)
+end
+
+LrTasks.startAsyncTask(function()
+    local catalog = LrApplication.activeCatalog()
+    local selectedPhotos = catalog:getTargetPhotos()
+    
+    if not selectedPhotos or #selectedPhotos == 0 then
+        LrDialogs.message("No Photos Selected", "Please select photos for batch processing.", "info")
+        return
+    end
+    
+    local apiKey = prefs.chatgptApiKey
+    if not apiKey or apiKey == "" then
+        LrDialogs.message("API Key Missing", "Please configure your ChatGPT API key in Plugin Manager first.", "warning")
+        return
+    end
+    
+    local result = LrDialogs.confirm(
+        "Batch Process " .. #selectedPhotos .. " Photos",
+        "This will upload " .. #selectedPhotos .. " photos to OpenAI Assistant for analysis.\n\n" ..
+        "Assistant ID: " .. ASSISTANT_ID .. "\n" ..
+        "Estimated cost: ~$" .. string.format("%.2f", #selectedPhotos * 0.02) .. "\n\n" ..
+        "Continue?",
+        "Process Batch",
+        "Cancel"
+    )
+    
+    if result == "cancel" then
+        return
+    end
+    
+    processBatch(selectedPhotos, apiKey)
+end)

@@ -1,76 +1,109 @@
-local LrTasks = import 'LrTasks'
+-- Gradual automation - try to add AI processing step by step
 local LrDialogs = import 'LrDialogs'
 local LrApplication = import 'LrApplication'
-local LrHttp = import 'LrHttp'
-local LrFileUtils = import 'LrFileUtils'
-local LrPathUtils = import 'LrPathUtils'
-local LrExportSession = import 'LrExportSession'
+local LrPrefs = import 'LrPrefs'
+local LrTasks = import 'LrTasks'
 
-local ASSISTANT_ID = "asst_HQan3G9EY0pDEpFaQG97idQL"
-local OPENAI_API_BASE = "https://api.openai.com/v1"
+-- Get basic info (we know this works)
+local prefs = LrPrefs.prefsForPlugin()
+local apiKey = prefs.chatgptApiKey
 
-local function createThread(apiKey)
-    local headers = {
-        { field = "Authorization", value = "Bearer " .. apiKey },
-        { field = "Content-Type", value = "application/json" },
-        { field = "OpenAI-Beta", value = "assistants=v2" }
-    }
-    
-    local response, responseHeaders = LrHttp.post(OPENAI_API_BASE .. "/threads", "{}", headers)
-    
-    if responseHeaders.status == 200 then
-        local threadData = JSON:decode(response)
-        return threadData.id
+if not apiKey or apiKey == "" then
+    LrDialogs.message("API Key Required", 
+        "Please set your OpenAI API key in Plugin Manager first.", "warning")
+    return
+end
+
+local catalog = LrApplication.activeCatalog()
+local selectedPhotos = catalog:getTargetPhotos()
+
+if not selectedPhotos or #selectedPhotos == 0 then
+    LrDialogs.message("No Photos Selected", "Please select photos to analyze.", "info")
+    return
+end
+
+-- Try to get photo paths using the method we know works
+local photoPaths = {}
+local photoInfo = ""
+
+for i, photo in ipairs(selectedPhotos) do
+    -- Use direct property access (we tested this works)
+    local photoPath = photo.path
+    if photoPath then
+        table.insert(photoPaths, photoPath)
+        photoInfo = photoInfo .. "Photo " .. i .. ": " .. photoPath .. "\n"
     else
-        error("Failed to create thread: " .. (response or "Unknown error"))
+        photoInfo = photoInfo .. "Photo " .. i .. ": No path available\n"
     end
 end
 
-local function processBatch(selectedPhotos, apiKey)
-    LrDialogs.message("Starting Batch Process", 
-        "Creating AI thread and preparing photos...\n\n" ..
-        "This is a demo - real implementation coming next!", "info")
-    
-    -- TODO: Real implementation will:
-    -- 1. Create OpenAI thread
-    -- 2. Export photos to temp files
-    -- 3. Upload photos to Assistant
-    -- 4. Process with Assistant
-    -- 5. Parse results and apply metadata
-    
-    LrDialogs.message("Batch Complete", 
-        "Demo completed for " .. #selectedPhotos .. " photos.\n\n" ..
-        "Ready to implement full Assistant API integration!", "info")
+-- Show what we found
+LrDialogs.message("Photo Analysis", 
+    "Found " .. #photoPaths .. " photos with paths:\n\n" .. photoInfo, "info")
+
+if #photoPaths == 0 then
+    LrDialogs.message("No Photo Paths", "Cannot access photo file paths.", "warning")
+    return
 end
 
+-- Ask user if they want to try automatic processing
+local result = LrDialogs.confirm(
+    "Try Automatic Processing?",
+    "Found " .. #photoPaths .. " accessible photos.\n\n" ..
+    "Would you like to try automatic AI processing?\n\n" ..
+    "This will attempt to:\n" ..
+    "1. Upload photos to OpenAI\n" ..
+    "2. Process them with AI Assistant\n" ..
+    "3. Return results\n\n" ..
+    "If this fails, we'll fall back to the manual workflow.",
+    "Try Automatic",
+    "Use Manual Workflow"
+)
+
+if result == "cancel" then
+    -- Fall back to manual workflow
+    local instructions = "MANUAL WORKFLOW:\n\n" ..
+        "1. Export your photos as JPEG to Desktop/LR_AI_Export/\n" ..
+        "2. Go to https://chat.openai.com\n" ..
+        "3. Upload the exported photos\n" ..
+        "4. Ask for titles, descriptions, and keywords"
+    
+    LrDialogs.message("Manual Workflow", instructions, "info")
+    return
+end
+
+-- Try automatic processing in async task
 LrTasks.startAsyncTask(function()
-    local catalog = LrApplication.activeCatalog()
-    local selectedPhotos = catalog:getTargetPhotos()
+    local LrHttp = import 'LrHttp'
     
-    if not selectedPhotos or #selectedPhotos == 0 then
-        LrDialogs.message("No Photos Selected", "Please select photos for batch processing.", "info")
-        return
+    -- Simple test: try to create a thread
+    local success, result = pcall(function()
+        local headers = {
+            { field = "Authorization", value = "Bearer " .. apiKey },
+            { field = "Content-Type", value = "application/json" },
+            { field = "OpenAI-Beta", value = "assistants=v2" }
+        }
+        
+        local response, responseHeaders = LrHttp.post(
+            "https://api.openai.com/v1/threads", 
+            "{}", 
+            headers
+        )
+        
+        return responseHeaders.status == 200
+    end)
+    
+    if success and result then
+        LrDialogs.message("Success!", 
+            "Automatic processing is working!\n\n" ..
+            "The plugin can communicate with OpenAI.\n\n" ..
+            "We can now build the full automation.", "info")
+    else
+        LrDialogs.message("Automatic Processing Failed", 
+            "Error: " .. tostring(result) .. "\n\n" ..
+            "Please use the manual workflow:\n" ..
+            "1. Export photos to Desktop/LR_AI_Export/\n" ..
+            "2. Go to https://chat.openai.com\n" ..
+            "3. Upload and analyze", "warning")
     end
-    
-    local apiKey = prefs.chatgptApiKey
-    if not apiKey or apiKey == "" then
-        LrDialogs.message("API Key Missing", "Please configure your ChatGPT API key in Plugin Manager first.", "warning")
-        return
-    end
-    
-    local result = LrDialogs.confirm(
-        "Batch Process " .. #selectedPhotos .. " Photos",
-        "This will upload " .. #selectedPhotos .. " photos to OpenAI Assistant for analysis.\n\n" ..
-        "Assistant ID: " .. ASSISTANT_ID .. "\n" ..
-        "Estimated cost: ~$" .. string.format("%.2f", #selectedPhotos * 0.02) .. "\n\n" ..
-        "Continue?",
-        "Process Batch",
-        "Cancel"
-    )
-    
-    if result == "cancel" then
-        return
-    end
-    
-    processBatch(selectedPhotos, apiKey)
 end)
