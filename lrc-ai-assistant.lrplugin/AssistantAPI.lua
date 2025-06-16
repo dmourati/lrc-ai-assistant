@@ -288,9 +288,6 @@ function AssistantAPI.createBatchPrompt(selectedPhotos)
         log:info("AssistantAPI prompt: " .. prompt)
     end
     
-    -- Also show prompt in dialog for debugging
-    LrDialogs.message("Debug - Prompt Being Sent", prompt)
-    
     return prompt
 end
 
@@ -361,8 +358,11 @@ function AssistantAPI.parseMetadataResults(messages, selectedPhotos)
         end
     end
     
-    -- Debug: Show what we received from AI
-    LrDialogs.message("Debug - AI Response", "Success: " .. tostring(success) .. "\n\nResponse: " .. responseText)
+    -- Log AI response for debugging (to log file only)
+    if log then
+        log:info("AI Response Success: " .. tostring(success))
+        log:info("AI Response Text: " .. responseText)
+    end
     
     if success and type(metadata) == "table" then
         for i, photo in ipairs(selectedPhotos) do
