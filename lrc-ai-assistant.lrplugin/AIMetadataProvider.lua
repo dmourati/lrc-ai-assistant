@@ -3,7 +3,7 @@ return {
     metadataFieldsForPhotos = {
         {
             id = 'aiLastRun',
-            title = LOC("$$$/lrc-ai-assistant/AIMetadataProvider/aiLastRun=Last AI run"),
+            title = "Last AI run",
             dataType = 'string',
             readOnly = true,
             searchable = true,
@@ -11,7 +11,7 @@ return {
         },
         {
             id = 'aiModel',
-            title = LOC("$$$/lrc-ai-assistant/AIMetadataProvider/aiModel=AI model"),
+            title = "AI model",
             dataType = 'string',
             readOnly = true,
             searchable = true,
@@ -19,7 +19,7 @@ return {
         },
         {
             id = 'photoContext',
-            title = LOC("$$$/lrc-ai-assistant/AIMetadataProvider/photoContext=Photo context"),
+            title = "Photo context",
             dataType = 'string',
             readOnly = false,
             searchable = true,
