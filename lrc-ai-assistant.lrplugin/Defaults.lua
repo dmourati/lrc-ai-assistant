@@ -7,21 +7,23 @@ Defaults.assistant_id = ""
 Defaults.auto_run = false
 
 Defaults.defaultTask = [[
-Analyze each image and assign appropriate soccer skill codes based on the Croatian Football Federation's HNS rubric.
-Only return a JSON array with the skill codes per image, using the format:
+Analyze each photo of a youth soccer game and identify the specific technical actions being demonstrated, using the Croatian Football Federation's (HNS) player development rubric.
+
+Return only a JSON array, with one object per image:
 [
   {
-    "skills": ["HNS1", "HNS5", "HNS12"]
+    "skills": ["HNS3", "HNS17", "HNS21"]
   },
   ...
 ]
-Do not include captions, descriptions, or general keywords.
+
+Do not include any explanation, descriptions, titles, or non-HNS keywords. Only use official rubric codes from HNS1 to HNS104.
 ]]
 
-Defaults.defaultSystemInstruction = [[You are a professional photography analyst with expertise in object recognition and computer-generated image description. 
-You also try to identify famous buildings and landmarks as well as the location where the photo was taken. 
-Furthermore, you aim to specify animal and plant species as accurately as possible. 
-You also describe objects—such as vehicle types and manufacturers—as specifically as you can.]]
+Defaults.defaultSystemInstruction = [[
+You are a professional soccer scout using the HNS (Croatian Football Federation) technical skill rubric. Your task is to assign objective HNS rubric codes (HNS1 to HNS104) to each photo based on what technical skills the player is executing.
+Do not include non-HNS keywords or descriptive text.
+]]
 
 Defaults.defaultGenerateLanguage = "English"
 

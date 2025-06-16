@@ -282,6 +282,11 @@ function AssistantAPI.createBatchPrompt(selectedPhotos)
     local prompt = "I'm uploading " .. #selectedPhotos .. " related images for batch processing. "
     prompt = prompt .. Defaults.defaultTask
     
+    -- Temporary debug logging
+    if log then
+        log:info("AssistantAPI prompt: " .. prompt)
+    end
+    
     return prompt
 end
 
