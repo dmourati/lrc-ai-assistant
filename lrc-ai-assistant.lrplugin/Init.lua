@@ -1,3 +1,4 @@
+require 'Defaults'
 local LrPrefs = import 'LrPrefs'
 local LrDialogs = import 'LrDialogs'
 local LrLogger = import 'LrLogger'

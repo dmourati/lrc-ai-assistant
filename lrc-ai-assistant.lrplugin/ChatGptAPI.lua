@@ -1,3 +1,5 @@
+require 'Defaults'
+
 ChatGptAPI = {}
 ChatGptAPI.__index = ChatGptAPI
 

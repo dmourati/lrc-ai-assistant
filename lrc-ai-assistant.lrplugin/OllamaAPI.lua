@@ -1,3 +1,5 @@
+require 'Defaults'
+
 OllamaAPI = {}
 OllamaAPI.__index = OllamaAPI
 

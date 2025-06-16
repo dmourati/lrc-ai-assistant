@@ -1,4 +1,5 @@
 
+require 'Defaults'
 
 ResponseStructure = {}
 ResponseStructure.__index = ResponseStructure

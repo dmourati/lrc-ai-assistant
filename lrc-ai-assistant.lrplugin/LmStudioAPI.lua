@@ -1,3 +1,5 @@
+require 'Defaults'
+
 LmStudioAPI = {}
 LmStudioAPI.__index = LmStudioAPI
 

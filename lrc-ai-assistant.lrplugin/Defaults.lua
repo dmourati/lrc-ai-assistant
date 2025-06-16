@@ -1,4 +1,10 @@
+-- lrc-ai-assistant.lrplugin/Defaults.lua
+
 Defaults = {}
+
+Defaults.openai_api_key = ""
+Defaults.assistant_id = ""
+Defaults.auto_run = false
 
 Defaults.defaultTask = [[Analyze the uploaded photo and generate the following data:
 ]]
@@ -19,26 +25,26 @@ Defaults.generateLanguages = {
 Defaults.defaultTemperature = 0.1
 
 Defaults.defaultKeywordCategories = {
-    LOC "$$$/lrc-ai-assistant/Defaults/ResponseStructure/keywords/Activities=Activities",
-    LOC "$$$/lrc-ai-assistant/Defaults/ResponseStructure/keywords/Buildings=Buildings",
-    LOC "$$$/lrc-ai-assistant/Defaults/ResponseStructure/keywords/Location=Location",
-    LOC "$$$/lrc-ai-assistant/Defaults/ResponseStructure/keywords/Objects=Objects",
-    LOC "$$$/lrc-ai-assistant/Defaults/ResponseStructure/keywords/People=People",
-    LOC "$$$/lrc-ai-assistant/Defaults/ResponseStructure/keywords/Moods=Moods",
-    LOC "$$$/lrc-ai-assistant/Defaults/ResponseStructure/keywords/Sceneries=Sceneries",
-    LOC "$$$/lrc-ai-assistant/Defaults/ResponseStructure/keywords/Texts=Texts",
-    LOC "$$$/lrc-ai-assistant/Defaults/ResponseStructure/keywords/Companies=Companies",
-    LOC "$$$/lrc-ai-assistant/Defaults/ResponseStructure/keywords/Weather=Weather",
-    LOC "$$$/lrc-ai-assistant/Defaults/ResponseStructure/keywords/Plants=Plants",
-    LOC "$$$/lrc-ai-assistant/Defaults/ResponseStructure/keywords/Animals=Animals",
-    LOC "$$$/lrc-ai-assistant/Defaults/ResponseStructure/keywords/Vehicles=Vehicles",
+    LOC("$$$/lrc-ai-assistant/Defaults/ResponseStructure/keywords/Activities=Activities"),
+    LOC("$$$/lrc-ai-assistant/Defaults/ResponseStructure/keywords/Buildings=Buildings"),
+    LOC("$$$/lrc-ai-assistant/Defaults/ResponseStructure/keywords/Location=Location"),
+    LOC("$$$/lrc-ai-assistant/Defaults/ResponseStructure/keywords/Objects=Objects"),
+    LOC("$$$/lrc-ai-assistant/Defaults/ResponseStructure/keywords/People=People"),
+    LOC("$$$/lrc-ai-assistant/Defaults/ResponseStructure/keywords/Moods=Moods"),
+    LOC("$$$/lrc-ai-assistant/Defaults/ResponseStructure/keywords/Sceneries=Sceneries"),
+    LOC("$$$/lrc-ai-assistant/Defaults/ResponseStructure/keywords/Texts=Texts"),
+    LOC("$$$/lrc-ai-assistant/Defaults/ResponseStructure/keywords/Companies=Companies"),
+    LOC("$$$/lrc-ai-assistant/Defaults/ResponseStructure/keywords/Weather=Weather"),
+    LOC("$$$/lrc-ai-assistant/Defaults/ResponseStructure/keywords/Plants=Plants"),
+    LOC("$$$/lrc-ai-assistant/Defaults/ResponseStructure/keywords/Animals=Animals"),
+    LOC("$$$/lrc-ai-assistant/Defaults/ResponseStructure/keywords/Vehicles=Vehicles"),
 }
 
 Defaults.targetDataFields = {
-    { title = LOC "$$$/lrc-ai-assistant/PluginInfoDialogSections/keywords=Keywords", value = "keyword" },
-    { title = LOC "$$$/lrc-ai-assistant/Defaults/ResponseStructure/ImageTitle=Image title", value = "title" },
-    { title = LOC "$$$/lrc-ai-assistant/Defaults/ResponseStructure/ImageCaption=Image caption", value = "caption" },
-    { title = LOC "$$$/lrc-ai-assistant/Defaults/ResponseStructure/ImageAltText=Image Alt Text", value = "altTextAccessibility" },
+    { title = LOC("$$$/lrc-ai-assistant/PluginInfoDialogSections/keywords=Keywords"), value = "keyword" },
+    { title = LOC("$$$/lrc-ai-assistant/Defaults/ResponseStructure/ImageTitle=Image title"), value = "title" },
+    { title = LOC("$$$/lrc-ai-assistant/Defaults/ResponseStructure/ImageCaption=Image caption"), value = "caption" },
+    { title = LOC("$$$/lrc-ai-assistant/Defaults/ResponseStructure/ImageAltText=Image Alt Text"), value = "altTextAccessibility" },
 }
 
 local aiModels = {
@@ -55,20 +61,23 @@ local aiModels = {
 }
 
 function Defaults.getAvailableAiModels()
-
     local result = {}
     for _, model in ipairs(aiModels) do
         table.insert(result, model)
     end
 
-    local ollamaModels = OllamaAPI.getLocalVisionModels()
-    if ollamaModels ~= nil then
-        for _, model in ipairs(ollamaModels) do
-            table.insert(result, model)
+    if OllamaAPI then
+        local ollamaModels = OllamaAPI.getLocalVisionModels()
+        if ollamaModels ~= nil then
+            for _, model in ipairs(ollamaModels) do
+                table.insert(result, model)
+            end
         end
     end
 
-    log:trace("getAvailableAiModels: " .. Util.dumpTable(result))
+    if log and Util then
+        log:trace("getAvailableAiModels: " .. Util.dumpTable(result))
+    end
 
     return result
 end
@@ -143,3 +152,5 @@ Defaults.lmStudioTopKeyWord = 'LMStudio'
 
 Defaults.geminiKeywordsGarbageAtStart = '```json'
 Defaults.geminiKeywordsGarbageAtEnd = '```'
+
+-- No `return` at the end!

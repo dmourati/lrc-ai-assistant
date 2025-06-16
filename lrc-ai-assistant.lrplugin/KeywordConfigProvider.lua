@@ -1,3 +1,5 @@
+require 'Defaults'
+
 KeywordConfigProvider = {}
 
 function KeywordConfigProvider.showKeywordCategoryDialog()

@@ -1,4 +1,6 @@
 
+require 'Defaults'
+
 AiModelAPI = {}
 AiModelAPI.__index = AiModelAPI
 

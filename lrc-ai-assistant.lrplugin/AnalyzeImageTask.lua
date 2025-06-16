@@ -80,7 +80,7 @@ local function exportAndAnalyzePhoto(photo, progressScope)
 
             if not analyzeSuccess then -- AI API request failed.
                 if result == 'RATE_LIMIT_EXHAUSTED' then
-                    LrDialogs.showError(LOC "$$$/lrc-ai-assistant/AnalyzeImageTask/rateLimit=Quota exhausted, set up pay as you go at Google, or wait for some hours.")
+                    LrDialogs.showError(LOC("$$$/lrc-ai-assistant/AnalyzeImageTask/rateLimit=Quota exhausted, set up pay as you go at Google, or wait for some hours."))
                     return false, inputTokens, outputTokens, "fatal", result
                 end
                 return false, inputTokens, outputTokens, "non-fatal", result
@@ -90,20 +90,20 @@ local function exportAndAnalyzePhoto(photo, progressScope)
             if result ~= nil and analyzeSuccess then
                 keywords = result.keywords
                 log:trace(Util.dumpTable(keywords))
-                title = result[LOC "$$$/lrc-ai-assistant/Defaults/ResponseStructure/ImageTitle=Image title"]
+                title = result[LOC("$$$/lrc-ai-assistant/Defaults/ResponseStructure/ImageTitle=Image title")]
                 log:trace(title)
-                caption = result[LOC "$$$/lrc-ai-assistant/Defaults/ResponseStructure/ImageCaption=Image caption"]
+                caption = result[LOC("$$$/lrc-ai-assistant/Defaults/ResponseStructure/ImageCaption=Image caption")]
                 log:trace(caption)
-                altText = result[LOC "$$$/lrc-ai-assistant/Defaults/ResponseStructure/ImageAltText=Image Alt Text"]
+                altText = result[LOC("$$$/lrc-ai-assistant/Defaults/ResponseStructure/ImageAltText=Image Alt Text")]
                 log:trace(altText)
             end
 
             local canceledByUser = false
-            photo.catalog:withWriteAccessDo(LOC "$$$/lrc-ai-assistant/AnalyzeImageTask/saveTitleCaption=Save AI generated title and caption", function()
+            photo.catalog:withWriteAccessDo(LOC("$$$/lrc-ai-assistant/AnalyzeImageTask/saveTitleCaption=Save AI generated title and caption"), function()
                 local saveCaption = true
                 if prefs.generateCaption and prefs.reviewCaption and not SkipReviewCaptions then
                     -- local existingCaption = photo:getFormattedMetadata('caption')
-                    local prop = AnalyzeImageProvider.showTextValidationDialog(LOC "$$$/lrc-ai-assistant/Defaults/ResponseStructure/ImageCaption=Image caption", caption)
+                    local prop = AnalyzeImageProvider.showTextValidationDialog(LOC("$$$/lrc-ai-assistant/Defaults/ResponseStructure/ImageCaption=Image caption"), caption)
                     caption = prop.reviewedText
                     SkipReviewCaptions = prop.skipFromHere
                     if prop.result == 'cancel' then
@@ -118,7 +118,7 @@ local function exportAndAnalyzePhoto(photo, progressScope)
                 local saveTitle = true
                 if prefs.generateTitle and prefs.reviewTitle and not SkipReviewTitles then
                     -- local existingTitle = photo:getFormattedMetadata('title')
-                    local prop = AnalyzeImageProvider.showTextValidationDialog(LOC "$$$/lrc-ai-assistant/Defaults/ResponseStructure/ImageTitle=Image title", title)
+                    local prop = AnalyzeImageProvider.showTextValidationDialog(LOC("$$$/lrc-ai-assistant/Defaults/ResponseStructure/ImageTitle=Image title"), title)
                     title = prop.reviewedText
                     SkipReviewTitles = prop.skipFromHere
                     if prop.result == 'cancel' then
@@ -134,7 +134,7 @@ local function exportAndAnalyzePhoto(photo, progressScope)
                 local saveAltText = true
                 if prefs.generateAltText and prefs.reviewAltText and not SkipReviewAltText then
                     -- local existingTitle = photo:getFormattedMetadata('title')
-                    local prop = AnalyzeImageProvider.showTextValidationDialog(LOC "$$$/lrc-ai-assistant/Defaults/ResponseStructure/ImageAltText=Image Alt Text", altText)
+                    local prop = AnalyzeImageProvider.showTextValidationDialog(LOC("$$$/lrc-ai-assistant/Defaults/ResponseStructure/ImageAltText=Image Alt Text"), altText)
                     if prop.result == 'cancel' then
                         log:trace("Canceled by Alt-Text validation dialog.")
                         canceledByUser = true
@@ -211,12 +211,12 @@ LrTasks.startAsyncTask(function()
         end
 
         if #selectedPhotos == 0 then
-            LrDialogs.showError(LOC "$$$/lrc-ai-assistant/AnalyzeImageTask/noPhotos=Please select at least one photo.")
+            LrDialogs.showError(LOC("$$$/lrc-ai-assistant/AnalyzeImageTask/noPhotos=Please select at least one photo."))
             return
         end
 
         if not prefs.generateCaption and not prefs.generateTitle and not prefs.generateKeywords and not prefs.generateAltText then
-            LrDialogs.showError(LOC "$$$/lrc-ai-assistant/AnalyzeImageTask/nothingToGenerate=Nothing selected to generate, check add-on manager settings.")
+            LrDialogs.showError(LOC("$$$/lrc-ai-assistant/AnalyzeImageTask/nothingToGenerate=Nothing selected to generate, check add-on manager settings."))
             return
         end
 
@@ -259,7 +259,7 @@ LrTasks.startAsyncTask(function()
                 if cause == "fatal" then
                     log:trace("Fatal error received. Stopping.")
                     progressScope:setCaption(LOC("$$$/lrc-ai-assistant/AnalyzeImageTask/analyzeFailed=Failed to analyze photo with AI ^1", tostring(i)))
-                    LrDialogs.showError(LOC "$$$/lrc-ai-assistant/AnalyzeImageTask/fatalError=Fatal error: Cannot continue. Check logs.")
+                    LrDialogs.showError(LOC("$$$/lrc-ai-assistant/AnalyzeImageTask/fatalError=Fatal error: Cannot continue. Check logs."))
                     AnalyzeImageProvider.showUsedTokensDialog(totalInputTokens, totalOutputTokens)
                     return false
                 elseif cause == "canceled" then

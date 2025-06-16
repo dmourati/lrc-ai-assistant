@@ -16,7 +16,7 @@ local AssistantAPI = require 'AssistantAPI'
 local BatchProcessor = {}
 
 -- Initialize batch processor with settings
-function BatchProcessor.initialize(prefs)
+function BatchProcessor.initialize()
     local apiKey = prefs.chatgptApiKey  -- Use existing ChatGPT API key
     local assistantId = prefs.assistantId
     
@@ -90,7 +90,7 @@ function BatchProcessor.processBatchWithProgress(selectedPhotos, progressScope)
     progressScope:setCaption("Initializing AI Assistant...")
     
     -- Initialize Assistant API
-    BatchProcessor.initialize(_PLUGIN.preferences)
+    BatchProcessor.initialize()
     
     -- Process batch
     local results = AssistantAPI.processBatch(selectedPhotos, progressScope)

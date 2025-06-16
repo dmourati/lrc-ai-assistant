@@ -1,3 +1,5 @@
+require 'Defaults'
+
 PromptConfigProvider = {}
 
 function PromptConfigProvider.deletePrompt(props)
