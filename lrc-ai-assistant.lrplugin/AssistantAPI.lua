@@ -282,10 +282,14 @@ function AssistantAPI.createBatchPrompt(selectedPhotos)
     local prompt = "I'm uploading " .. #selectedPhotos .. " related images for batch processing. "
     prompt = prompt .. Defaults.defaultTask
     
-    -- Temporary debug logging
+    -- Debug logging
     if log then
         log:info("AssistantAPI prompt: " .. prompt)
     end
+    
+    -- Also show prompt in dialog for debugging
+    local LrDialogs = import 'LrDialogs'
+    LrDialogs.message("Debug - Prompt Being Sent", prompt)
     
     return prompt
 end
@@ -356,6 +360,10 @@ function AssistantAPI.parseMetadataResults(messages, selectedPhotos)
             end
         end
     end
+    
+    -- Debug: Show what we received from AI
+    local LrDialogs = import 'LrDialogs'
+    LrDialogs.message("Debug - AI Response", "Success: " .. tostring(success) .. "\n\nResponse: " .. responseText)
     
     if success and type(metadata) == "table" then
         for i, photo in ipairs(selectedPhotos) do
