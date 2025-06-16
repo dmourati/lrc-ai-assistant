@@ -110,6 +110,11 @@ if _G.prefs.enableBatchProcessing == nil then
     _G.prefs.enableBatchProcessing = true
 end
 
-function _G.JSON.assert(b, m)
-    LrDialogs.showError("Error decoding JSON response.")
+-- JSON error handler - will be set up when JSON module is loaded
+_G.setupJSONErrorHandler = function()
+    if _G.JSON then
+        _G.JSON.assert = function(b, m)
+            LrDialogs.showError("Error decoding JSON response.")
+        end
+    end
 end
