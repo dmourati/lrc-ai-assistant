@@ -10,6 +10,8 @@ local LrDialogs = import 'LrDialogs'
 local LrApplication = import 'LrApplication'
 local LrSelection = import 'LrSelection'
 local LrErrors = import 'LrErrors'
+local LrPathUtils = import 'LrPathUtils'
+local LrFileUtils = import 'LrFileUtils'
 
 local AssistantAPI = require 'AssistantAPI'
 
@@ -107,8 +109,6 @@ end
 
 -- Copy photo to AI_Staging for photo watcher processing
 function BatchProcessor.copyToStaging(photo)
-    local LrPathUtils = import 'LrPathUtils'
-    local LrFileUtils = import 'LrFileUtils'
     
     -- Get source file path
     local sourcePath = photo:getRawMetadata('path')
