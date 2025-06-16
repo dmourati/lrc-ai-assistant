@@ -119,7 +119,7 @@ function BatchProcessor.processBatchWithProgress(selectedPhotos, progressScope)
         end
         
         -- Create job.json for this burst
-        BatchProcessor.createJobJson(burstDir, burstPhotoCount, burstIndex)
+        BatchProcessor.createJobJson(burstDir, selectedPhotos, startPhoto, endPhoto)
     end
     
     progressScope:setCaption("Photos staged for processing!")
@@ -166,17 +166,23 @@ function BatchProcessor.copyPhotoToBurst(photo, burstDir)
 end
 
 -- Create job.json file for burst folder
-function BatchProcessor.createJobJson(burstDir, photoCount, burstIndex)
+function BatchProcessor.createJobJson(burstDir, selectedPhotos, startPhoto, endPhoto)
     local JSON = require 'JSON'
     
-    -- Create job configuration
+    -- Build files array from the photos we just copied
+    local files = {}
+    for photoIndex = startPhoto, endPhoto do
+        local photo = selectedPhotos[photoIndex]
+        local sourcePath = photo:getRawMetadata('path')
+        if sourcePath then
+            local filename = LrPathUtils.leafName(sourcePath)
+            table.insert(files, filename)
+        end
+    end
+    
+    -- Create job configuration matching existing format
     local jobData = {
-        burst_id = string.format("burst_%03d", burstIndex),
-        photo_count = photoCount,
-        created_by = "Lightroom AI Assistant",
-        created_at = os.date("%Y-%m-%d %H:%M:%S"),
-        status = "pending",
-        workflow = "HNS_soccer_analysis"
+        files = files
     }
     
     -- Write job.json file
@@ -189,7 +195,7 @@ function BatchProcessor.createJobJson(burstDir, photoCount, burstIndex)
         file:write(jsonContent)
         file:close()
         if log then
-            log:info("Created job.json: " .. jobPath)
+            log:info("Created job.json: " .. jobPath .. " with " .. #files .. " files")
         end
         return true
     else
