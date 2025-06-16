@@ -5,8 +5,7 @@ local LrTasks = import 'LrTasks'
 local LrShell = import 'LrShell'
 local LrColor = import 'LrColor'
 
--- Debug test
-LrDialogs.message("Debug", "Defaults loaded: " .. tostring(Defaults ~= nil))
+-- Debug test removed for schema loading
 
 PluginInfoDialogSections = {}
 
@@ -79,7 +78,7 @@ function PluginInfoDialogSections.sectionsForBottomOfDialog(f, propertyTable)
 
         {
             bind_to_object = propertyTable,
-            title = LOC("$$$/lrc-ai-assistant/PluginInfoDialogSections/Logging=Activate debug logging"),
+            title = "Activate debug logging",
 
             f:row {
                 f:static_text {
@@ -96,7 +95,7 @@ function PluginInfoDialogSections.sectionsForBottomOfDialog(f, propertyTable)
                     -- width = share 'labelWidth'
                 },
                 f:push_button {
-                    title = LOC("$$$/lrc-ai-assistant/PluginInfoDialogSections/ShowLogfile=Show logfile"),
+                    title = "Show logfile",
                     action = function (button)
                         LrShell.revealInShell(Util.getLogfilePath())
                     end,
@@ -114,7 +113,7 @@ function PluginInfoDialogSections.sectionsForBottomOfDialog(f, propertyTable)
             },
             f:row {
                 f:push_button {
-                    title = LOC("$$$/lrc-ai-assistant/PluginInfoDialogSections/UpdateCheck=Check for updates"),
+                    title = "Check for updates",
                     action = function (button)
                         LrTasks.startAsyncTask(function ()
                             UpdateCheck.checkForNewVersion()
@@ -147,18 +146,18 @@ function PluginInfoDialogSections.sectionsForTopOfDialog(f, propertyTable)
         {
             bind_to_object = propertyTable,
 
-            title = LOC("$$$/lrc-ai-assistant/PluginInfoDialogSections/header=AI Plugin settings"),
+            title = "AI Plugin settings",
 
             f:group_box {
                 width = share 'groupBoxWidth',
-                title = LOC("$$$/lrc-ai-assistant/PluginInfoDialogSections/aiModel=AI model to be used"),
+                title = "AI model to be used",
                 f:row {
                     f:popup_menu {
                         value = bind 'ai',
                         items = bind 'models',
                     },
                     f:static_text {
-                        title = LOC("$$$/lrc-ai-assistant/PluginInfoDialogSections/showCosts=Show costs (without any warranty!!!)"),
+                        title = "Show costs (without any warranty!!!)",
                         -- alignment = 'right',
                         -- width = share 'labelWidth',
                     },
@@ -171,10 +170,10 @@ function PluginInfoDialogSections.sectionsForTopOfDialog(f, propertyTable)
 
             f:group_box {
                 width = share 'groupBoxWidth',
-                title = LOC("$$$/lrc-ai-assistant/PluginInfoDialogSections/ApiKeys=API keys"),
+                title = "API keys",
                 f:row {
                     f:static_text {
-                        title = LOC("$$$/lrc-ai-assistant/PluginInfoDialogSections/GoogleApiKey=Google API key"),
+                        title = "Google API key",
                         -- alignment = 'right',
                         width = share 'labelWidth'
                     },
@@ -186,7 +185,7 @@ function PluginInfoDialogSections.sectionsForTopOfDialog(f, propertyTable)
                 },
                 f:row {
                     f:static_text {
-                        title = LOC("$$$/lrc-ai-assistant/PluginInfoDialogSections/ChatGPTApiKey=ChatGPT API key"),
+                        title = "ChatGPT API key",
                         -- alignment = 'right',
                         width = share 'labelWidth'
                     },
@@ -260,7 +259,7 @@ function PluginInfoDialogSections.sectionsForTopOfDialog(f, propertyTable)
                 f:row {
                     f:static_text {
                         width = share 'labelWidth',
-                        title = LOC("$$$/lrc-ai-assistant/PluginInfoDialogSections/generateLanguage=Result language"),
+                        title = "Result language",
                     },
                     f:popup_menu {
                         value = bind 'generateLanguage',
@@ -270,10 +269,10 @@ function PluginInfoDialogSections.sectionsForTopOfDialog(f, propertyTable)
             },
             f:group_box {
                 width = share 'groupBoxWidth',
-                title = LOC("$$$/lrc-ai-assistant/PluginInfoDialogSections/ContentValidateConfig=Content and Validation Configuration"),
+                title = "Content and Validation Configuration",
                 f:row {
                     f:static_text {
-                        title = LOC("$$$/lrc-ai-assistant/PluginInfoDialogSections/generate=Generate the following"),
+                        title = "Generate the following",
                         -- alignment = 'right',
                         width = share 'labelWidth',
                     },
@@ -282,33 +281,33 @@ function PluginInfoDialogSections.sectionsForTopOfDialog(f, propertyTable)
                         width = share 'checkboxWidth',
                     },
                     f:static_text {
-                        title = LOC("$$$/lrc-ai-assistant/PluginInfoDialogSections/caption=Caption"),
+                        title = "Caption",
                     },
                     f:checkbox {
                         value = bind 'generateAltText',
                         width = share 'checkboxWidth',
                     },
                     f:static_text {
-                        title = LOC("$$$/lrc-ai-assistant/PluginInfoDialogSections/alttext=Alt Text"),
+                        title = "Alt Text",
                     },
                     f:checkbox {
                         value = bind 'generateTitle',
                         width = share 'checkboxWidth',
                     },
                     f:static_text {
-                        title = LOC("$$$/lrc-ai-assistant/PluginInfoDialogSections/title=Title"),
+                        title = "Title",
                     },
                     f:checkbox {
                         value = bind 'generateKeywords',
                         width = share 'checkboxWidth',
                     },
                     f:static_text {
-                        title = LOC("$$$/lrc-ai-assistant/PluginInfoDialogSections/keywords=Keywords"),
+                        title = "Keywords",
                     },
                 },
                 f:row {
                     f:static_text {
-                        title = LOC("$$$/lrc-ai-assistant/PluginInfoDialogSections/validateBeforeSaving=Validate before saving"),
+                        title = "Validate before saving",
                         -- alignment = 'right',
                         width = share 'labelWidth',
                     },
@@ -318,7 +317,7 @@ function PluginInfoDialogSections.sectionsForTopOfDialog(f, propertyTable)
                         enabled = bind 'generateCaption',
                     },
                     f:static_text {
-                        title = LOC("$$$/lrc-ai-assistant/PluginInfoDialogSections/caption=Caption"),
+                        title = "Caption",
                     },
                     f:checkbox {
                         value = bind 'reviewAltText',
@@ -326,7 +325,7 @@ function PluginInfoDialogSections.sectionsForTopOfDialog(f, propertyTable)
                         enabled = bind 'generateAltText',
                     },
                     f:static_text {
-                        title = LOC("$$$/lrc-ai-assistant/PluginInfoDialogSections/alttext=Alt Text"),
+                        title = "Alt Text",
                     },
                     f:checkbox {
                         value = bind 'reviewTitle',
@@ -334,7 +333,7 @@ function PluginInfoDialogSections.sectionsForTopOfDialog(f, propertyTable)
                         enabled = bind 'generateTitle',
                     },
                     f:static_text {
-                        title = LOC("$$$/lrc-ai-assistant/PluginInfoDialogSections/title=Title"),
+                        title = "Title",
                     },
                     f:checkbox {
                         value = bind 'reviewKeywords',
@@ -342,7 +341,7 @@ function PluginInfoDialogSections.sectionsForTopOfDialog(f, propertyTable)
                         enabled = false,
                     },
                     f:static_text {
-                        title = LOC("$$$/lrc-ai-assistant/PluginInfoDialogSections/keywords=Keywords"),
+                        title = "Keywords",
                     },
                 },
                 f:row {
@@ -374,7 +373,7 @@ function PluginInfoDialogSections.sectionsForTopOfDialog(f, propertyTable)
                         width = share 'checkboxWidth'
                     },
                     f:static_text {
-                        title = LOC("$$$/lrc-ai-assistant/PluginInfoDialogSections/showPreflightDialog=Show Preflight dialog"),
+                        title = "Show Preflight dialog",
                         width = share 'labelWidth',
                     },
                 },
@@ -387,7 +386,7 @@ function PluginInfoDialogSections.sectionsForTopOfDialog(f, propertyTable)
                         width = share 'checkboxWidth'
                     },
                     f:static_text {
-                        title = LOC("$$$/lrc-ai-assistant/PluginInfoDialogSections/showPhotoContextDialog=Show Photo Context dialog"),
+                        title = "Show Photo Context dialog",
                         width = share 'labelWidth',
                     },
                 },
@@ -395,11 +394,11 @@ function PluginInfoDialogSections.sectionsForTopOfDialog(f, propertyTable)
 
             f:group_box {
                 width = share 'groupBoxWidth',
-                title = LOC("$$$/lrc-ai-assistant/PluginInfoDialogSections/keywords=Keywords"),
+                title = "Keywords",
                 f:row {
                     f:static_text {
                         width = share 'labelWidth',
-                        title = LOC("$$$/lrc-ai-assistant/PluginInfoDialogSections/useKeywordHierarchy=Use keyword hierarchy"),
+                        title = "Use keyword hierarchy",
                     },
                     f:checkbox {
                         value = bind 'useKeywordHierarchy',
@@ -408,14 +407,14 @@ function PluginInfoDialogSections.sectionsForTopOfDialog(f, propertyTable)
                     f:push_button {
                         width = share 'labelWidth',
                         enabled = bind 'useKeywordHierarchy',
-                        title = LOC("$$$/lrc-ai-assistant/PluginInfoDialogSections/editKeywordHierarchy=Edit keyword categories"),
+                        title = "Edit keyword categories",
                         action = function (button)
                             KeywordConfigProvider.showKeywordCategoryDialog()
                         end,
                     },
                     f:static_text {
                         width = share 'labelWidth',
-                        title = LOC("$$$/lrc-ai-assistant/PluginInfoDialogSections/useTopLevelKeyword=Use top-level keyword"),
+                        title = "Use top-level keyword",
                     },
                     f:checkbox {
                         value = bind 'useTopLevelKeyword',
@@ -426,10 +425,10 @@ function PluginInfoDialogSections.sectionsForTopOfDialog(f, propertyTable)
 
             f:group_box {
                 width = share 'groupBoxWidth',
-                title = LOC("$$$/lrc-ai-assistant/PluginInfoDialogSections/exportSettings=Export settings"),
+                title = "Export settings",
                 f:row {
                     f:static_text {
-                        title = LOC("$$$/lrc-ai-assistant/PluginInfoDialogSections/exportSize=Export size in pixel (long edge)"),
+                        title = "Export size in pixel (long edge)",
                     },
                     f:popup_menu {
                         value = bind 'exportSize',
@@ -438,7 +437,7 @@ function PluginInfoDialogSections.sectionsForTopOfDialog(f, propertyTable)
                 },
                 f:row {
                     f:static_text {
-                        title = LOC("$$$/lrc-ai-assistant/PluginInfoDialogSections/exportQuality=Export JPEG quality in percent"),
+                        title = "Export JPEG quality in percent",
                     },
                     f:slider {
                         value = bind 'exportQuality',
@@ -455,10 +454,10 @@ function PluginInfoDialogSections.sectionsForTopOfDialog(f, propertyTable)
 
             f:group_box {
                 width = share 'groupBoxWidth',
-                title = LOC("$$$/lrc-ai-assistant/PluginInfoDialogSections/ollamaSettings=Ollama settings"),
+                title = "Ollama settings",
                 f:row {
                     f:static_text {
-                        title = LOC("$$$/lrc-ai-assistant/PluginInfoDialogSections/OllamaBaseUrl=Ollama Base URL"),
+                        title = "Ollama Base URL",
                         width = share 'labelWidth'
                     },
                     f:edit_field {
