@@ -34,26 +34,26 @@ Defaults.generateLanguages = {
 Defaults.defaultTemperature = 0.1
 
 Defaults.defaultKeywordCategories = {
-    LOC("$$$/lrc-ai-assistant/Defaults/ResponseStructure/keywords/Activities=Activities"),
-    LOC("$$$/lrc-ai-assistant/Defaults/ResponseStructure/keywords/Buildings=Buildings"),
-    LOC("$$$/lrc-ai-assistant/Defaults/ResponseStructure/keywords/Location=Location"),
-    LOC("$$$/lrc-ai-assistant/Defaults/ResponseStructure/keywords/Objects=Objects"),
-    LOC("$$$/lrc-ai-assistant/Defaults/ResponseStructure/keywords/People=People"),
-    LOC("$$$/lrc-ai-assistant/Defaults/ResponseStructure/keywords/Moods=Moods"),
-    LOC("$$$/lrc-ai-assistant/Defaults/ResponseStructure/keywords/Sceneries=Sceneries"),
-    LOC("$$$/lrc-ai-assistant/Defaults/ResponseStructure/keywords/Texts=Texts"),
-    LOC("$$$/lrc-ai-assistant/Defaults/ResponseStructure/keywords/Companies=Companies"),
-    LOC("$$$/lrc-ai-assistant/Defaults/ResponseStructure/keywords/Weather=Weather"),
-    LOC("$$$/lrc-ai-assistant/Defaults/ResponseStructure/keywords/Plants=Plants"),
-    LOC("$$$/lrc-ai-assistant/Defaults/ResponseStructure/keywords/Animals=Animals"),
-    LOC("$$$/lrc-ai-assistant/Defaults/ResponseStructure/keywords/Vehicles=Vehicles"),
+    "Activities",
+    "Buildings",
+    "Location",
+    "Objects",
+    "People",
+    "Moods",
+    "Sceneries",
+    "Texts",
+    "Companies",
+    "Weather",
+    "Plants",
+    "Animals",
+    "Vehicles",
 }
 
 Defaults.targetDataFields = {
-    { title = LOC("$$$/lrc-ai-assistant/PluginInfoDialogSections/keywords=Keywords"), value = "keyword" },
-    { title = LOC("$$$/lrc-ai-assistant/Defaults/ResponseStructure/ImageTitle=Image title"), value = "title" },
-    { title = LOC("$$$/lrc-ai-assistant/Defaults/ResponseStructure/ImageCaption=Image caption"), value = "caption" },
-    { title = LOC("$$$/lrc-ai-assistant/Defaults/ResponseStructure/ImageAltText=Image Alt Text"), value = "altTextAccessibility" },
+    { title = "Keywords", value = "keyword" },
+    { title = "Image title", value = "title" },
+    { title = "Image caption", value = "caption" },
+    { title = "Image Alt Text", value = "altTextAccessibility" },
 }
 
 local aiModels = {
