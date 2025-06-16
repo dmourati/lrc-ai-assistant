@@ -223,8 +223,10 @@ function AssistantAPI.processBatch(selectedPhotos, progressScope)
         if progressScope then progressScope:setCaption("Sending images to AI Assistant...") end
         AssistantAPI.addMessage(threadId, prompt, fileIds)
         
-        -- Run assistant with HNS system instruction
-        local systemInstruction = AiModelAPI.addKeywordHierarchyToSystemInstruction()
+        -- Run assistant with HNS-specific system instruction
+        local systemInstruction = "You are a soccer skills analyst trained in the Croatian Football Federation (HNS) skill assessment rubric. " ..
+            "Analyze soccer images and identify specific skills demonstrated by players. " ..
+            "Only return the requested JSON format with HNS skill codes. Do not include any other metadata or descriptions."
         local runId = AssistantAPI.runAssistant(threadId, systemInstruction)
         
         -- Wait for completion
@@ -323,13 +325,29 @@ function AssistantAPI.parseMetadataResults(messages, selectedPhotos)
             end
         end
         
-        -- Fallback: extract JSON array from response text
+        -- Fallback: extract JSON array from response text with proper bracket matching
         if not success then
             local jsonStart = responseText:find("%[")
-            local jsonEnd = responseText:find("%]", jsonStart)
-            if jsonStart and jsonEnd then
-                local jsonText = responseText:sub(jsonStart, jsonEnd)
-                success, metadata = pcall(JSON.decode, JSON, jsonText)
+            if jsonStart then
+                local bracketCount = 0
+                local jsonEnd = nil
+                for i = jsonStart, #responseText do
+                    local char = responseText:sub(i, i)
+                    if char == "[" then
+                        bracketCount = bracketCount + 1
+                    elseif char == "]" then
+                        bracketCount = bracketCount - 1
+                        if bracketCount == 0 then
+                            jsonEnd = i
+                            break
+                        end
+                    end
+                end
+                
+                if jsonEnd then
+                    local jsonText = responseText:sub(jsonStart, jsonEnd)
+                    success, metadata = pcall(JSON.decode, JSON, jsonText)
+                end
             end
         end
     end
