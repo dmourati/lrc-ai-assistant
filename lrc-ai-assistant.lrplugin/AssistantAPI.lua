@@ -276,15 +276,9 @@ end
 
 -- Create batch processing prompt using HNS system
 function AssistantAPI.createBatchPrompt(selectedPhotos)
-    -- Use the established HNS prompt system
-    local task = AiModelAPI.generatePromptFromConfiguration()
-    
-    -- Add batch-specific context
+    -- Use the HNS-specific task directly from Defaults
     local prompt = "I'm uploading " .. #selectedPhotos .. " related images for batch processing. "
-    prompt = prompt .. "Please analyze all images together and generate consistent metadata for each one. "
-    prompt = prompt .. "Consider the relationships between images and maintain thematic consistency.\n\n"
-    prompt = prompt .. task
-    prompt = prompt .. "\n\nFormat your response as JSON with an array of metadata objects, one for each image in the upload order."
+    prompt = prompt .. Defaults.defaultTask
     
     return prompt
 end
