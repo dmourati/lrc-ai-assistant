@@ -15,22 +15,6 @@ local AssistantAPI = require 'AssistantAPI'
 
 local BatchProcessor = {}
 
--- Initialize batch processor with settings
-function BatchProcessor.initialize()
-    local apiKey = prefs.chatgptApiKey  -- Use existing ChatGPT API key
-    local assistantId = prefs.assistantId
-    
-    if not apiKey or apiKey == "" then
-        LrErrors.throwUserError("OpenAI API key not configured. Please set it in Plugin Manager.")
-    end
-    
-    if not assistantId or assistantId == "" then
-        LrErrors.throwUserError("Assistant ID not configured. Please set it in Plugin Manager.")
-    end
-    
-    AssistantAPI.initialize(apiKey, assistantId)
-    BatchProcessor.prefs = prefs
-end
 
 -- Main batch processing function called from menu
 function BatchProcessor.processBatchSelection()
@@ -56,17 +40,16 @@ function BatchProcessor.processBatchSelection()
         end
         
         -- Show confirmation dialog
-        local message = "Process " .. #selectedPhotos .. " selected photos with AI Assistant?\n\n"
+        local message = "Copy " .. #selectedPhotos .. " selected photos to AI_Staging for processing?\n\n"
         message = message .. "This will:\n"
-        message = message .. "• Upload images to OpenAI for analysis\n"
-        message = message .. "• Generate consistent metadata across the batch\n"
-        message = message .. "• Apply results to title, caption, keywords, and alt text\n\n"
-        message = message .. "Estimated cost: ~$" .. string.format("%.2f", #selectedPhotos * 0.02)
+        message = message .. "• Copy photos to AI_Staging directory\n"
+        message = message .. "• Trigger your photo watcher for automated HNS analysis\n"
+        message = message .. "• Processed results will appear in AI_Processed"
         
         local result = LrDialogs.confirm(
-            "Batch Process with AI Assistant",
+            "Stage Photos for AI Processing",
             message,
-            "Process Batch",
+            "Copy to Staging",
             "Cancel"
         )
         
@@ -87,103 +70,83 @@ end
 
 -- Process batch with progress reporting
 function BatchProcessor.processBatchWithProgress(selectedPhotos, progressScope)
-    progressScope:setCaption("Initializing AI Assistant...")
+    progressScope:setCaption("Copying photos to AI_Staging...")
     
-    -- Initialize Assistant API
-    BatchProcessor.initialize()
+    local successCount = 0
+    local totalCount = #selectedPhotos
     
-    -- Process batch
-    local results = AssistantAPI.processBatch(selectedPhotos, progressScope)
-    
-    -- Apply metadata to photos
-    progressScope:setCaption("Applying metadata to photos...")
-    local catalog = LrApplication.activeCatalog()
-    
-    catalog:withWriteAccessDo("Apply AI Assistant Metadata", function()
-        for i, photo in ipairs(selectedPhotos) do
-            progressScope:setCaption("Applying metadata to photo " .. i .. " of " .. #selectedPhotos)
-            progressScope:setPortionComplete(0.8 + (i / #selectedPhotos) * 0.2)
-            
-            local metadata = results[photo]
-            if metadata then
-                BatchProcessor.applyMetadataToPhoto(photo, metadata)
-            end
+    -- Copy each photo to AI_Staging for photo watcher processing
+    for i, photo in ipairs(selectedPhotos) do
+        progressScope:setCaption("Copying photo " .. i .. " of " .. totalCount .. " to AI_Staging...")
+        progressScope:setPortionComplete(i / totalCount)
+        
+        local success = BatchProcessor.stagePhotoForProcessing(photo)
+        if success then
+            successCount = successCount + 1
         end
-    end)
+    end
     
-    progressScope:setCaption("Batch processing complete!")
+    progressScope:setCaption("Photos staged for processing!")
+    progressScope:setPortionComplete(1.0)
     
     -- Show completion dialog
     LrDialogs.message(
-        "HNS Soccer Analysis Complete",
-        "Successfully analyzed " .. #selectedPhotos .. " soccer photos with AI Assistant.\n\n" ..
-        "HNS skill codes have been applied as keywords under 'HNS Skills' category.\n\n" ..
-        "Check the Keywords panel to see the assigned Croatian Football Federation skill codes.",
+        "Photos Staged for AI Processing",
+        "Successfully copied " .. successCount .. " of " .. totalCount .. " photos to AI_Staging.\n\n" ..
+        "Your photo watcher will detect these files and trigger the automated\n" ..
+        "Croatian Football Federation (HNS) soccer analysis workflow.\n\n" ..
+        "Processed results will appear in AI_Processed when complete.",
         "info"
     )
 end
 
--- Apply metadata to individual photo
-function BatchProcessor.applyMetadataToPhoto(photo, metadata)
-    local updates = {}
-    
-    -- Log metadata format for debugging (to log file only)
-    if log then
-        local metadataType = "Unknown"
-        if metadata.skills then metadataType = "HNS Skills" end
-        if metadata.title then metadataType = "Legacy Metadata" end
-        log:info("Applying metadata type: " .. metadataType)
-    end
-    
-    -- Handle HNS skill codes (new format)
-    if metadata.skills and type(metadata.skills) == "table" then
-        BatchProcessor.applyHNSSkills(photo, metadata.skills)
-        return
-    end
-    
-    -- Legacy metadata handling (fallback for other formats)
-    -- Apply title
-    if metadata.title and BatchProcessor.shouldUpdateField("title", photo:getFormattedMetadata("title")) then
-        updates.title = metadata.title
-    end
-    
-    -- Apply caption
-    if metadata.caption and BatchProcessor.shouldUpdateField("caption", photo:getFormattedMetadata("caption")) then
-        updates.caption = metadata.caption
-    end
-    
-    -- Apply alt text (if supported)
-    if metadata.alt_text and BatchProcessor.shouldUpdateField("alt_text", photo:getPropertyForPlugin(_PLUGIN, "alt_text")) then
-        photo:setPropertyForPlugin(_PLUGIN, "alt_text", metadata.alt_text)
-    end
-    
-    -- Apply basic metadata
-    if next(updates) then
-        photo:batchSetMetadata(updates)
-    end
-    
-    -- Apply keywords (requires special handling)
-    if metadata.keywords and type(metadata.keywords) == "table" then
-        BatchProcessor.applyKeywords(photo, metadata.keywords)
-    end
+-- Copy photo to staging for photo watcher processing
+function BatchProcessor.stagePhotoForProcessing(photo)
+    return BatchProcessor.copyToStaging(photo)
 end
 
--- Apply HNS skill codes as keywords
-function BatchProcessor.applyHNSSkills(photo, skills)
-    local catalog = LrApplication.activeCatalog()
-    local hnsRoot = "HNS Skills"
+-- Copy photo to AI_Staging for photo watcher processing
+function BatchProcessor.copyToStaging(photo)
+    local LrPathUtils = import 'LrPathUtils'
+    local LrFileUtils = import 'LrFileUtils'
     
-    -- Create or get HNS root keyword
-    local rootKeyword = catalog:createKeyword(hnsRoot, {}, false, nil, true)
-    
-    -- Apply each HNS skill code as a keyword
-    for _, skillCode in ipairs(skills) do
-        if type(skillCode) == "string" and skillCode:match("^HNS%d+$") then
-            local keyword = catalog:createKeyword(skillCode, {}, false, rootKeyword, true)
-            photo:addKeyword(keyword)
-        end
+    -- Get source file path
+    local sourcePath = photo:getRawMetadata('path')
+    if not sourcePath then
+        if log then log:info("Could not get source path for photo") end
+        return false
     end
+    
+    -- Use AI_Staging directory in home folder
+    local homeDir = os.getenv("HOME")
+    local stagingDir = LrPathUtils.child(homeDir, "AI_Staging")
+    
+    -- Verify AI_Staging directory exists
+    if not LrFileUtils.exists(stagingDir) then
+        if log then log:info("AI_Staging directory not found at: " .. stagingDir) end
+        return false
+    end
+    
+    -- Get filename and create destination path
+    local filename = LrPathUtils.leafName(sourcePath)
+    local destPath = LrPathUtils.child(stagingDir, filename)
+    
+    -- Copy file to AI_Staging directory (preserve original)
+    if LrFileUtils.exists(sourcePath) and not LrFileUtils.exists(destPath) then
+        local success = LrFileUtils.copy(sourcePath, destPath)
+        if log then
+            if success then
+                log:info("Copied photo to staging: " .. destPath)
+            else
+                log:info("Failed to copy photo to AI_Staging directory")
+            end
+        end
+        return success
+    end
+    
+    return true -- Already exists, consider successful
 end
+
 
 -- Apply hierarchical keywords
 function BatchProcessor.applyKeywords(photo, keywords)
