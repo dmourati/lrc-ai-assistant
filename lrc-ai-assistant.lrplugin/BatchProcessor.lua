@@ -104,6 +104,7 @@ function BatchProcessor.processBatchWithProgress(selectedPhotos, progressScope)
         -- Process photos for this burst
         local startPhoto = (burstIndex - 1) * burstSize + 1
         local endPhoto = math.min(burstIndex * burstSize, totalCount)
+        local burstPhotoCount = endPhoto - startPhoto + 1
         
         for photoIndex = startPhoto, endPhoto do
             local photo = selectedPhotos[photoIndex]
@@ -116,6 +117,9 @@ function BatchProcessor.processBatchWithProgress(selectedPhotos, progressScope)
                 successCount = successCount + 1
             end
         end
+        
+        -- Create job.json for this burst
+        BatchProcessor.createJobJson(burstDir, burstPhotoCount, burstIndex)
     end
     
     progressScope:setCaption("Photos staged for processing!")
@@ -161,6 +165,40 @@ function BatchProcessor.copyPhotoToBurst(photo, burstDir)
     return true -- Already exists, consider successful
 end
 
+-- Create job.json file for burst folder
+function BatchProcessor.createJobJson(burstDir, photoCount, burstIndex)
+    local JSON = require 'JSON'
+    
+    -- Create job configuration
+    local jobData = {
+        burst_id = string.format("burst_%03d", burstIndex),
+        photo_count = photoCount,
+        created_by = "Lightroom AI Assistant",
+        created_at = os.date("%Y-%m-%d %H:%M:%S"),
+        status = "pending",
+        workflow = "HNS_soccer_analysis"
+    }
+    
+    -- Write job.json file
+    local jobPath = LrPathUtils.child(burstDir, "job.json")
+    local jsonContent = JSON:encode(jobData)
+    
+    -- Write JSON to file
+    local file = io.open(jobPath, "w")
+    if file then
+        file:write(jsonContent)
+        file:close()
+        if log then
+            log:info("Created job.json: " .. jobPath)
+        end
+        return true
+    else
+        if log then
+            log:info("Failed to create job.json: " .. jobPath)
+        end
+        return false
+    end
+end
 
 -- Apply hierarchical keywords
 function BatchProcessor.applyKeywords(photo, keywords)
