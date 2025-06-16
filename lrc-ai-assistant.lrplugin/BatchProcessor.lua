@@ -115,13 +115,10 @@ function BatchProcessor.processBatchWithProgress(selectedPhotos, progressScope)
     
     -- Show completion dialog
     LrDialogs.message(
-        "Batch Processing Complete",
-        "Successfully processed " .. #selectedPhotos .. " photos with AI Assistant.\n\n" ..
-        "Generated metadata has been applied to:\n" ..
-        "• Photo titles\n" ..
-        "• Captions\n" ..
-        "• Keywords\n" ..
-        "• Alt text",
+        "HNS Soccer Analysis Complete",
+        "Successfully analyzed " .. #selectedPhotos .. " soccer photos with AI Assistant.\n\n" ..
+        "HNS skill codes have been applied as keywords under 'HNS Skills' category.\n\n" ..
+        "Check the Keywords panel to see the assigned Croatian Football Federation skill codes.",
         "info"
     )
 end
@@ -130,6 +127,13 @@ end
 function BatchProcessor.applyMetadataToPhoto(photo, metadata)
     local updates = {}
     
+    -- Handle HNS skill codes (new format)
+    if metadata.skills and type(metadata.skills) == "table" then
+        BatchProcessor.applyHNSSkills(photo, metadata.skills)
+        return
+    end
+    
+    -- Legacy metadata handling (fallback for other formats)
     -- Apply title
     if metadata.title and BatchProcessor.shouldUpdateField("title", photo:getFormattedMetadata("title")) then
         updates.title = metadata.title
@@ -153,6 +157,23 @@ function BatchProcessor.applyMetadataToPhoto(photo, metadata)
     -- Apply keywords (requires special handling)
     if metadata.keywords and type(metadata.keywords) == "table" then
         BatchProcessor.applyKeywords(photo, metadata.keywords)
+    end
+end
+
+-- Apply HNS skill codes as keywords
+function BatchProcessor.applyHNSSkills(photo, skills)
+    local catalog = LrApplication.activeCatalog()
+    local hnsRoot = "HNS Skills"
+    
+    -- Create or get HNS root keyword
+    local rootKeyword = catalog:createKeyword(hnsRoot, {}, false, nil, true)
+    
+    -- Apply each HNS skill code as a keyword
+    for _, skillCode in ipairs(skills) do
+        if type(skillCode) == "string" and skillCode:match("^HNS%d+$") then
+            local keyword = catalog:createKeyword(skillCode, {}, false, rootKeyword, true)
+            photo:addKeyword(keyword)
+        end
     end
 end
 
