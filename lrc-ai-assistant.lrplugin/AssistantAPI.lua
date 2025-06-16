@@ -12,7 +12,7 @@ local LrProgressScope = import 'LrProgressScope'
 local LrExportSession = import 'LrExportSession'
 local LrTasks = import 'LrTasks'
 local JSON = require 'JSON'
-local Defaults = require 'Defaults'
+require 'Defaults'
 
 local AssistantAPI = {}
 
