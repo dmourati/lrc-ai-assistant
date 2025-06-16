@@ -6,7 +6,16 @@ Defaults.openai_api_key = ""
 Defaults.assistant_id = ""
 Defaults.auto_run = false
 
-Defaults.defaultTask = [[Analyze the uploaded photo and generate the following data:
+Defaults.defaultTask = [[
+Analyze each image and assign appropriate soccer skill codes based on the Croatian Football Federation's HNS rubric.
+Only return a JSON array with the skill codes per image, using the format:
+[
+  {
+    "skills": ["HNS1", "HNS5", "HNS12"]
+  },
+  ...
+]
+Do not include captions, descriptions, or general keywords.
 ]]
 
 Defaults.defaultSystemInstruction = [[You are a professional photography analyst with expertise in object recognition and computer-generated image description. 
