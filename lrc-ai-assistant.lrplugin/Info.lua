@@ -12,7 +12,7 @@ return {
 LrSdkVersion = 11.0,
 LrSdkMinimumVersion = 11.0,
 LrToolkitIdentifier = 'lrc-ai-assistant',
-LrPluginName = LOC "$$$/lrc-ai-assistant/Info/PluginName=Lightroom AI assistant",
+LrPluginName = LOC("$$$/lrc-ai-assistant/Info/PluginName=Lightroom AI assistant"),
 LrInitPlugin = "Init.lua",
 LrPluginInfoProvider = 'PluginInfo.lua',
 LrPluginInfoURL = 'https://blog.fokuspunk.de/lrc-ai-assistant/',
@@ -24,7 +24,7 @@ LrMetadataProvider = "AIMetadataProvider.lua",
 
 LrLibraryMenuItems = {
     {
-        title = LOC "$$$/lrc-ai-assistant/Info/Title=Analyze photos with AI",
+        title = LOC("$$$/lrc-ai-assistant/Info/Title=Analyze photos with AI"),
         file = "AnalyzeImageTask.lua",
     },
     {
