@@ -75,7 +75,7 @@ function AiModelAPI.generatePromptFromConfiguration()
         result = result .. "* Keywords\n"
     end
 
-    result = "\nAll results should be generated in " .. prefs.generateLanguage
+    result = result .. "\nAll results should be generated in " .. prefs.generateLanguage
 
     return result
 end
