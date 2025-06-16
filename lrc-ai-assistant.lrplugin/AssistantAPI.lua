@@ -9,6 +9,8 @@ local LrFileUtils = import 'LrFileUtils'
 local LrErrors = import 'LrErrors'
 local LrFunctionContext = import 'LrFunctionContext'
 local LrProgressScope = import 'LrProgressScope'
+local LrExportSession = import 'LrExportSession'
+local LrTasks = import 'LrTasks'
 local JSON = require 'JSON'
 
 local AssistantAPI = {}
@@ -251,7 +253,7 @@ function AssistantAPI.exportTempImage(photo)
         LR_format = "JPEG",
         LR_jpeg_quality = 0.8,
         LR_export_destinationType = "specificFolder",
-        LR_export_destinationPath = tempDir,
+        LR_export_destinationPathPrefix = tempDir,
         LR_export_useSubfolder = false,
         LR_renamingTokensOn = true,
         LR_tokens = tempName:gsub("%.jpg$", ""),
