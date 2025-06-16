@@ -11,6 +11,7 @@ local LrFunctionContext = import 'LrFunctionContext'
 local LrProgressScope = import 'LrProgressScope'
 local LrExportSession = import 'LrExportSession'
 local LrTasks = import 'LrTasks'
+local LrDialogs = import 'LrDialogs'
 local JSON = require 'JSON'
 require 'Defaults'
 
@@ -288,7 +289,6 @@ function AssistantAPI.createBatchPrompt(selectedPhotos)
     end
     
     -- Also show prompt in dialog for debugging
-    local LrDialogs = import 'LrDialogs'
     LrDialogs.message("Debug - Prompt Being Sent", prompt)
     
     return prompt
@@ -362,7 +362,6 @@ function AssistantAPI.parseMetadataResults(messages, selectedPhotos)
     end
     
     -- Debug: Show what we received from AI
-    local LrDialogs = import 'LrDialogs'
     LrDialogs.message("Debug - AI Response", "Success: " .. tostring(success) .. "\n\nResponse: " .. responseText)
     
     if success and type(metadata) == "table" then
