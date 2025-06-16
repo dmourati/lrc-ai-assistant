@@ -127,11 +127,24 @@ function BatchProcessor.copyToStaging(photo)
         return false
     end
     
-    -- Get filename and create destination path
-    local filename = LrPathUtils.leafName(sourcePath)
-    local destPath = LrPathUtils.child(stagingDir, filename)
+    -- Create date-based folder structure (YYYY-MM-DD format)
+    local currentDate = os.date("%Y-%m-%d")
+    local dateDir = LrPathUtils.child(stagingDir, currentDate)
     
-    -- Copy file to AI_Staging directory (preserve original)
+    -- Create date directory if it doesn't exist
+    if not LrFileUtils.exists(dateDir) then
+        local success = LrFileUtils.createDirectory(dateDir)
+        if not success then
+            if log then log:info("Failed to create date directory: " .. dateDir) end
+            return false
+        end
+    end
+    
+    -- Get filename and create destination path in date folder
+    local filename = LrPathUtils.leafName(sourcePath)
+    local destPath = LrPathUtils.child(dateDir, filename)
+    
+    -- Copy file to date-organized staging directory (preserve original)
     if LrFileUtils.exists(sourcePath) and not LrFileUtils.exists(destPath) then
         local success = LrFileUtils.copy(sourcePath, destPath)
         if log then
