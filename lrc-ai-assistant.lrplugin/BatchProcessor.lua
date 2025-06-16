@@ -118,7 +118,7 @@ function BatchProcessor.copyToStaging(photo)
     end
     
     -- Use AI_Staging directory in home folder
-    local homeDir = os.getenv("HOME")
+    local homeDir = LrPathUtils.getStandardFilePath("home")
     local stagingDir = LrPathUtils.child(homeDir, "AI_Staging")
     
     -- Verify AI_Staging directory exists
