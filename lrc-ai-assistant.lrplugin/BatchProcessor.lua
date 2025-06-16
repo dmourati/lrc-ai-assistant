@@ -161,7 +161,7 @@ function BatchProcessor.copyPhotoToBurst(photo, burstDir)
     local exportSettings = {
         LR_format = "JPEG",
         LR_jpeg_quality = 0.9,
-        LR_size = "2048", -- Reasonable size for processing
+        LR_size = "1024", -- 1024px on long side for processing
         LR_export_destinationType = "specificFolder",
         LR_export_destinationPathPrefix = burstDir,
         LR_export_useSubfolder = false,
