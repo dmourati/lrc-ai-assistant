@@ -318,9 +318,15 @@ function AssistantAPI.parseMetadataResults(messages, selectedPhotos)
     local success, metadata = pcall(JSON.decode, JSON, responseText)
     if not success then
         -- Try to extract JSON from markdown code blocks
-        local jsonText = responseText:match("```json%s*(.-)%s*```")
-        if jsonText then
-            success, metadata = pcall(JSON.decode, JSON, jsonText)
+        local codeStart = responseText:find("```json")
+        local codeEnd = responseText:find("```", codeStart and codeStart + 1)
+        if codeStart and codeEnd then
+            -- Extract content between the code block markers
+            local startPos = responseText:find("\n", codeStart) or codeStart + 7 -- Skip "```json"
+            local jsonText = responseText:sub(startPos + 1, codeEnd - 1):match("^%s*(.-)%s*$")
+            if jsonText and jsonText ~= "" then
+                success, metadata = pcall(JSON.decode, JSON, jsonText)
+            end
         end
         
         -- Fallback: extract JSON array from response text
@@ -328,7 +334,7 @@ function AssistantAPI.parseMetadataResults(messages, selectedPhotos)
             local jsonStart = responseText:find("%[")
             local jsonEnd = responseText:find("%]", jsonStart)
             if jsonStart and jsonEnd then
-                jsonText = responseText:sub(jsonStart, jsonEnd)
+                local jsonText = responseText:sub(jsonStart, jsonEnd)
                 success, metadata = pcall(JSON.decode, JSON, jsonText)
             end
         end
