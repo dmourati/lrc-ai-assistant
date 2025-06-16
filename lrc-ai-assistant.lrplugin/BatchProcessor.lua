@@ -12,6 +12,7 @@ local LrSelection = import 'LrSelection'
 local LrErrors = import 'LrErrors'
 local LrPathUtils = import 'LrPathUtils'
 local LrFileUtils = import 'LrFileUtils'
+local LrExportSession = import 'LrExportSession'
 
 local AssistantAPI = require 'AssistantAPI'
 
@@ -136,47 +137,77 @@ function BatchProcessor.processBatchWithProgress(selectedPhotos, progressScope)
     )
 end
 
--- Copy photo to specific burst directory
+-- Export photo as JPG to specific burst directory
 function BatchProcessor.copyPhotoToBurst(photo, burstDir)
-    -- Get source file path
+    
+    -- Get base filename without extension and create JPG filename
     local sourcePath = photo:getRawMetadata('path')
     if not sourcePath then
         if log then log:info("Could not get source path for photo") end
         return false
     end
     
-    -- Get filename and create destination path in burst folder
-    local filename = LrPathUtils.leafName(sourcePath)
-    local destPath = LrPathUtils.child(burstDir, filename)
+    local baseFilename = LrPathUtils.leafName(sourcePath)
+    -- Remove original extension and add .jpg
+    local jpgFilename = baseFilename:gsub("%.[^%.]*$", "") .. ".jpg"
+    local destPath = LrPathUtils.child(burstDir, jpgFilename)
     
-    -- Copy file to burst directory (preserve original)
-    if LrFileUtils.exists(sourcePath) and not LrFileUtils.exists(destPath) then
-        local success = LrFileUtils.copy(sourcePath, destPath)
-        if log then
-            if success then
-                log:info("Copied photo to burst: " .. destPath)
-            else
-                log:info("Failed to copy photo to burst directory")
-            end
-        end
-        return success
+    -- Skip if JPG already exists
+    if LrFileUtils.exists(destPath) then
+        return true
     end
     
-    return true -- Already exists, consider successful
+    -- Export settings for JPG conversion
+    local exportSettings = {
+        LR_format = "JPEG",
+        LR_jpeg_quality = 0.9,
+        LR_size = "2048", -- Reasonable size for processing
+        LR_export_destinationType = "specificFolder",
+        LR_export_destinationPathPrefix = burstDir,
+        LR_export_useSubfolder = false,
+        LR_renamingTokensOn = true,
+        LR_tokens = jpgFilename:gsub("%.jpg$", ""), -- Remove .jpg for token
+        LR_tokenCustomString = "",
+        LR_collisionHandling = "overwrite"
+    }
+    
+    -- Perform export
+    local success = false
+    local exportSession = LrExportSession({
+        photosToExport = { photo },
+        exportSettings = exportSettings
+    })
+    
+    if exportSession then
+        exportSession:doExportOnCurrentTask()
+        success = LrFileUtils.exists(destPath)
+        
+        if log then
+            if success then
+                log:info("Exported photo as JPG to burst: " .. destPath)
+            else
+                log:info("Failed to export photo to burst directory")
+            end
+        end
+    end
+    
+    return success
 end
 
 -- Create job.json file for burst folder
 function BatchProcessor.createJobJson(burstDir, selectedPhotos, startPhoto, endPhoto)
     local JSON = require 'JSON'
     
-    -- Build files array from the photos we just copied
+    -- Build files array from the JPG files we just exported
     local files = {}
     for photoIndex = startPhoto, endPhoto do
         local photo = selectedPhotos[photoIndex]
         local sourcePath = photo:getRawMetadata('path')
         if sourcePath then
-            local filename = LrPathUtils.leafName(sourcePath)
-            table.insert(files, filename)
+            local baseFilename = LrPathUtils.leafName(sourcePath)
+            -- Convert to JPG filename (same logic as in copyPhotoToBurst)
+            local jpgFilename = baseFilename:gsub("%.[^%.]*$", "") .. ".jpg"
+            table.insert(files, jpgFilename)
         end
     end
     
