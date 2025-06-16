@@ -127,6 +127,16 @@ end
 function BatchProcessor.applyMetadataToPhoto(photo, metadata)
     local updates = {}
     
+    -- Debug: Show what metadata format we received
+    local LrDialogs = import 'LrDialogs'
+    local metadataType = "Unknown"
+    if metadata.skills then metadataType = "HNS Skills" end
+    if metadata.title then metadataType = "Legacy Metadata" end
+    LrDialogs.message("Debug - Metadata Format", 
+        "Type: " .. metadataType .. "\n\n" ..
+        "Skills present: " .. tostring(metadata.skills ~= nil) .. "\n" ..
+        "Title present: " .. tostring(metadata.title ~= nil))
+    
     -- Handle HNS skill codes (new format)
     if metadata.skills and type(metadata.skills) == "table" then
         BatchProcessor.applyHNSSkills(photo, metadata.skills)
