@@ -25,7 +25,7 @@ function KeywordConfigProvider.showKeywordCategoryDialog()
         propertyTable[key] = keywords[i]
         table.insert(editFields, f:edit_field { value = bind(key), immediate = true })
     end
-    editFields.title = LOC "$$$/lrc-ai-assistant/ResponseStructure/ConfigureResponseStructure=Keywords"
+    editFields.title = LOC("$$$/lrc-ai-assistant/ResponseStructure/ConfigureResponseStructure=Keywords")
 
     local keywordBox = f:group_box(editFields)
 
@@ -36,12 +36,12 @@ function KeywordConfigProvider.showKeywordCategoryDialog()
         },
         f:column {
             f:group_box {
-                title = LOC "$$$/lrc-ai-assistant/ResponseStructure/NewKeywordCategory=New Category",
+                title = LOC("$$$/lrc-ai-assistant/ResponseStructure/NewKeywordCategory=New Category"),
                 f:edit_field {
                     value = bind 'new',
                 },
                 f:push_button {
-                    title = LOC "$$$/lrc-ai-assistant/ResponseStructure/AddKeywordCategory=Add",
+                    title = LOC("$$$/lrc-ai-assistant/ResponseStructure/AddKeywordCategory=Add"),
                     action = function (button)
                         table.insert(prefs.keywordCategories, propertyTable.new)
                         LrDialogs.stopModalWithResult(keywordBox, "cancel")
@@ -53,9 +53,9 @@ function KeywordConfigProvider.showKeywordCategoryDialog()
     }
 
     local result = LrDialogs.presentModalDialog({
-        title = LOC "$$$/lrc-ai-assistant/ResponseStructure/ConfigureResponseStructure=Configure data generation and mapping",
+        title = LOC("$$$/lrc-ai-assistant/ResponseStructure/ConfigureResponseStructure=Configure data generation and mapping"),
         contents = dialogView,
-        otherVerb = LOC "$$$/lrc-ai-assistant/ResponseStructure/ResetToDefault=Reset to defaults"
+        otherVerb = LOC("$$$/lrc-ai-assistant/ResponseStructure/ResetToDefault=Reset to defaults")
     })
 
     if result == 'ok' then
@@ -69,7 +69,7 @@ function KeywordConfigProvider.showKeywordCategoryDialog()
         end
         log:trace(Util.dumpTable(prefs.keywordCategories))
     elseif result == 'other' then
-        local confirm = LrDialogs.confirm(LOC "$$$/lrc-ai-assistant/ResponseStructure/ResetToDefaultKeywordStructure=Reset to default keyword structure?")
+        local confirm = LrDialogs.confirm(LOC("$$$/lrc-ai-assistant/ResponseStructure/ResetToDefaultKeywordStructure=Reset to default keyword structure?"))
         if confirm == 'ok' then
             log:trace("Reset keyword categories to default")
             prefs.keywordCategories = Defaults.defaultKeywordCategories

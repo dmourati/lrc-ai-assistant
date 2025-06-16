@@ -60,14 +60,14 @@ function AnalyzeImageProvider.showTextValidationDialog(typeOfText, text)
                 value = bind 'skipFromHere'
             },
             f:static_text {
-                title = LOC "$$$/lrc-ai-assistant/AnalyzeImageTask/SkipFromHere=Save following without reviewing.",
+                title = LOC("$$$/lrc-ai-assistant/AnalyzeImageTask/SkipFromHere=Save following without reviewing."),
             },
         },
     }
 
     local result = LrDialogs.presentModalDialog({
         -- title = 'Review Results',
-        title = LOC "$$$/lrc-ai-assistant/AnalyzeImageTask/ReviewWindowTitle=Review results",
+        title = LOC("$$$/lrc-ai-assistant/AnalyzeImageTask/ReviewWindowTitle=Review results"),
         contents = dialogView,
     })
 
@@ -106,7 +106,7 @@ function AnalyzeImageProvider.showUsedTokensDialog(totalInputTokens, totalOutput
         local f = LrView.osFactory()
         local share = LrView.share
         local dialog = {}
-        dialog.title = LOC "$$$/lrc-ai-assistant/AnalyzeImageTask/UsedTokenDialog/Title=Generation costs"
+        dialog.title = LOC("$$$/lrc-ai-assistant/AnalyzeImageTask/UsedTokenDialog/Title=Generation costs")
         dialog.resizable = false
         dialog.contents = f:column {
             f:row {
@@ -114,7 +114,7 @@ function AnalyzeImageProvider.showUsedTokensDialog(totalInputTokens, totalOutput
                 f:column {
                     f:group_box {
                         width = share 'groupBoxWidth',
-                        title = LOC "$$$/lrc-ai-assistant/AnalyzeImageTask/UsedTokenDialog/UsedTokens=Used Tokens",
+                        title = LOC("$$$/lrc-ai-assistant/AnalyzeImageTask/UsedTokenDialog/UsedTokens=Used Tokens"),
                         f:spacer {
                             width = share 'spacerWidth',
                         },
@@ -140,7 +140,7 @@ function AnalyzeImageProvider.showUsedTokensDialog(totalInputTokens, totalOutput
                     size = "small",
                     f:group_box {
                         width = share 'groupBoxWidth',
-                        title = LOC "$$$/lrc-ai-assistant/AnalyzeImageTask/UsedTokenDialog/GeneratedCosts=Generated costs",
+                        title = LOC("$$$/lrc-ai-assistant/AnalyzeImageTask/UsedTokenDialog/GeneratedCosts=Generated costs"),
                         f:spacer {
                             width = share 'spacerWidth',
                         },
@@ -171,7 +171,7 @@ function AnalyzeImageProvider.showUsedTokensDialog(totalInputTokens, totalOutput
             f:row {
                 font = "<system/bold>",
                 f:static_text {
-                    title = LOC "$$$/lrc-ai-assistant/AnalyzeImageTask/UsedTokenDialog/TotalCosts=Total costs:",
+                    title = LOC("$$$/lrc-ai-assistant/AnalyzeImageTask/UsedTokenDialog/TotalCosts=Total costs:"),
                 },
                 f:static_text {
                     title = tostring(totalCosts) .. " USD",
@@ -259,7 +259,7 @@ function AnalyzeImageProvider.showPhotoContextDialog(photo)
         },
         f:row {
             f:static_text {
-                title = LOC "$$$/lrc-ai-assistant/AnalyzeImageTask/PhotoContextDialogData=Photo Context",
+                title = LOC("$$$/lrc-ai-assistant/AnalyzeImageTask/PhotoContextDialogData=Photo Context"),
             },
         },
         f:row {
@@ -284,13 +284,13 @@ function AnalyzeImageProvider.showPhotoContextDialog(photo)
                 value = bind 'skipFromHere'
             },
             f:static_text {
-                title = LOC "$$$/lrc-ai-assistant/AnalyzeImageTask/SkipPreflightFromHere=Use for all following pictures.",
+                title = LOC("$$$/lrc-ai-assistant/AnalyzeImageTask/SkipPreflightFromHere=Use for all following pictures."),
             },
         },
     }
 
     local result = LrDialogs.presentModalDialog({
-        title = LOC "$$$/lrc-ai-assistant/AnalyzeImageTask/PhotoContextDialogData=Photo Context",
+        title = LOC("$$$/lrc-ai-assistant/AnalyzeImageTask/PhotoContextDialogData=Photo Context"),
         contents = dialogView,
     })
 
@@ -415,7 +415,7 @@ function AnalyzeImageProvider.showPreflightDialog(ctx)
         f:row {
             f:static_text {
                 width = share 'labelWidth',
-                title = LOC "$$$/lrc-ai-assistant/PluginInfoDialogSections/generateLanguage=Result language",
+                title = LOC("$$$/lrc-ai-assistant/PluginInfoDialogSections/generateLanguage=Result language"),
             },
             f:popup_menu {
                 value = bind 'generateLanguage',
@@ -454,7 +454,7 @@ function AnalyzeImageProvider.showPreflightDialog(ctx)
                 width = share 'checkboxWidth'
             },
             f:static_text {
-                title = LOC "$$$/lrc-ai-assistant/PluginInfoDialogSections/showCosts=Show costs (without any warranty!!!)",
+                title = LOC("$$$/lrc-ai-assistant/PluginInfoDialogSections/showCosts=Show costs (without any warranty!!!)"),
             },
         },
         f:row {
@@ -468,28 +468,28 @@ function AnalyzeImageProvider.showPreflightDialog(ctx)
                 width = share 'checkboxWidth',
             },
             f:static_text {
-                title = LOC "$$$/lrc-ai-assistant/PluginInfoDialogSections/caption=Caption",
+                title = LOC("$$$/lrc-ai-assistant/PluginInfoDialogSections/caption=Caption"),
             },
             f:checkbox {
                 value = bind 'generateAltText',
                 width = share 'checkboxWidth',
             },
             f:static_text {
-                title = LOC "$$$/lrc-ai-assistant/PluginInfoDialogSections/alttext=Alt Text",
+                title = LOC("$$$/lrc-ai-assistant/PluginInfoDialogSections/alttext=Alt Text"),
             },
             f:checkbox {
                 value = bind 'generateTitle',
                 width = share 'checkboxWidth',
             },
             f:static_text {
-                title = LOC "$$$/lrc-ai-assistant/PluginInfoDialogSections/title=Title",
+                title = LOC("$$$/lrc-ai-assistant/PluginInfoDialogSections/title=Title"),
             },
             f:checkbox {
                 value = bind 'generateKeywords',
                 width = share 'checkboxWidth',
             },
             f:static_text {
-                title = LOC "$$$/lrc-ai-assistant/PluginInfoDialogSections/keywords=Keywords",
+                title = LOC("$$$/lrc-ai-assistant/PluginInfoDialogSections/keywords=Keywords"),
             },
         },
         f:row {
@@ -504,7 +504,7 @@ function AnalyzeImageProvider.showPreflightDialog(ctx)
                 enabled = bind 'generateCaption',
             },
             f:static_text {
-                title = LOC "$$$/lrc-ai-assistant/PluginInfoDialogSections/caption=Caption",
+                title = LOC("$$$/lrc-ai-assistant/PluginInfoDialogSections/caption=Caption"),
             },
             f:checkbox {
                 value = bind 'reviewAltText',
@@ -512,7 +512,7 @@ function AnalyzeImageProvider.showPreflightDialog(ctx)
                 enabled = bind 'generateAltText',
             },
             f:static_text {
-                title = LOC "$$$/lrc-ai-assistant/PluginInfoDialogSections/alttext=Alt Text",
+                title = LOC("$$$/lrc-ai-assistant/PluginInfoDialogSections/alttext=Alt Text"),
             },
             f:checkbox {
                 value = bind 'reviewTitle',
@@ -520,7 +520,7 @@ function AnalyzeImageProvider.showPreflightDialog(ctx)
                 enabled = bind 'generateTitle',
             },
             f:static_text {
-                title = LOC "$$$/lrc-ai-assistant/PluginInfoDialogSections/title=Title",
+                title = LOC("$$$/lrc-ai-assistant/PluginInfoDialogSections/title=Title"),
             },
             f:checkbox {
                 value = bind 'reviewKeywords',
@@ -528,7 +528,7 @@ function AnalyzeImageProvider.showPreflightDialog(ctx)
                 enabled = false,
             },
             f:static_text {
-                title = LOC "$$$/lrc-ai-assistant/PluginInfoDialogSections/keywords=Keywords",
+                title = LOC("$$$/lrc-ai-assistant/PluginInfoDialogSections/keywords=Keywords"),
             },
         },
         f:row {
@@ -542,14 +542,14 @@ function AnalyzeImageProvider.showPreflightDialog(ctx)
                 width = share 'checkboxWidth'
             },
             f:static_text {
-                title = LOC "$$$/lrc-ai-assistant/PluginInfoDialogSections/showPhotoContextDialog=Show Photo Context dialog",
+                title = LOC("$$$/lrc-ai-assistant/PluginInfoDialogSections/showPhotoContextDialog=Show Photo Context dialog"),
                 width = share 'labelWidth',
             },
         },
     }
 
     local result = LrDialogs.presentModalDialog({
-        title = LOC "$$$/lrc-ai-assistant/AnalyzeImageTask/PreflightDialogTitle=Preflight Dialog",
+        title = LOC("$$$/lrc-ai-assistant/AnalyzeImageTask/PreflightDialogTitle=Preflight Dialog"),
         contents = dialogView,
     })
 

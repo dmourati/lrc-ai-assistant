@@ -159,7 +159,7 @@ function PromptConfigProvider.showPromptConfigDialog(propertyTable)
     local result = LrDialogs.presentModalDialog({
         title = "Configure Prompts",
         contents = dialogView,
-        otherVerb = LOC "$$$/lrc-ai-assistant/ResponseStructure/ResetToDefault=Reset to defaults"
+        otherVerb = LOC("$$$/lrc-ai-assistant/ResponseStructure/ResetToDefault=Reset to defaults")
     })
 
     if result == 'ok' then

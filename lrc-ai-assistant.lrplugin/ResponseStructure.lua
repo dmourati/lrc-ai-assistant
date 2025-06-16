@@ -41,7 +41,7 @@ function ResponseStructure:new()
         self.strString = "string"
         self.ai = "ollama"
     else
-        Util.handleError('Configuration error: No valid AI model selected, check Module Manager for Configuration', LOC "$$$/lrc-ai-assistant/ResponseStructure/NoModelSelectedError=No AI model selected, check Configuration in Add-Ons manager")
+        Util.handleError('Configuration error: No valid AI model selected, check Module Manager for Configuration', LOC("$$$/lrc-ai-assistant/ResponseStructure/NoModelSelectedError=No AI model selected, check Configuration in Add-Ons manager"))
     end
 
     return instance
@@ -68,23 +68,23 @@ function ResponseStructure:generateResponseStructure()
     end
 
     if prefs.generateCaption then
-        result.properties[LOC "$$$/lrc-ai-assistant/Defaults/ResponseStructure/ImageCaption=Image caption"] = { type = self.strString }
+        result.properties[LOC("$$$/lrc-ai-assistant/Defaults/ResponseStructure/ImageCaption=Image caption")] = { type = self.strString }
         if self.ai == 'chatgpt' or self.ai == 'ollama' then
-            table.insert(result.required, LOC "$$$/lrc-ai-assistant/Defaults/ResponseStructure/ImageCaption=Image caption")
+            table.insert(result.required, LOC("$$$/lrc-ai-assistant/Defaults/ResponseStructure/ImageCaption=Image caption"))
         end
     end
 
     if prefs.generateTitle then
-        result.properties[LOC "$$$/lrc-ai-assistant/Defaults/ResponseStructure/ImageTitle=Image title"] = { type = self.strString }
+        result.properties[LOC("$$$/lrc-ai-assistant/Defaults/ResponseStructure/ImageTitle=Image title")] = { type = self.strString }
         if self.ai == 'chatgpt' or self.ai == 'ollama' then
-            table.insert(result.required, LOC "$$$/lrc-ai-assistant/Defaults/ResponseStructure/ImageTitle=Image title")
+            table.insert(result.required, LOC("$$$/lrc-ai-assistant/Defaults/ResponseStructure/ImageTitle=Image title"))
         end
     end
 
     if prefs.generateAltText then
-        result.properties[LOC "$$$/lrc-ai-assistant/Defaults/ResponseStructure/ImageAltText=Image Alt Text"] = { type = self.strString }
+        result.properties[LOC("$$$/lrc-ai-assistant/Defaults/ResponseStructure/ImageAltText=Image Alt Text")] = { type = self.strString }
         if self.ai == 'chatgpt' or self.ai == 'ollama' then
-            table.insert(result.required, LOC "$$$/lrc-ai-assistant/Defaults/ResponseStructure/ImageAltText=Image Alt Text")
+            table.insert(result.required, LOC("$$$/lrc-ai-assistant/Defaults/ResponseStructure/ImageAltText=Image Alt Text"))
         end
     end
 
