@@ -7,7 +7,7 @@ function ChatGptAPI:new()
     local o = setmetatable({}, ChatGptAPI)
 
     if Util.nilOrEmpty(prefs.chatgptApiKey) then
-        Util.handleError('ChatGPT API key not configured.', LOC "$$$/lrc-ai-assistant/ChatGptAPI/NoAPIkey=No ChatGPT API key configured in Add-Ons manager.")
+        Util.handleError('ChatGPT API key not configured.', LOC("$$$/lrc-ai-assistant/ChatGptAPI/NoAPIkey=No ChatGPT API key configured in Add-Ons manager.")
         return nil
     else
         self.apiKey = prefs.chatgptApiKey
