@@ -72,19 +72,49 @@ end
 
 -- Process batch with progress reporting
 function BatchProcessor.processBatchWithProgress(selectedPhotos, progressScope)
-    progressScope:setCaption("Copying photos to AI_Staging...")
+    progressScope:setCaption("Organizing photos into burst folders...")
     
     local successCount = 0
     local totalCount = #selectedPhotos
     
-    -- Copy each photo to AI_Staging for photo watcher processing
-    for i, photo in ipairs(selectedPhotos) do
-        progressScope:setCaption("Copying photo " .. i .. " of " .. totalCount .. " to AI_Staging...")
-        progressScope:setPortionComplete(i / totalCount)
+    -- Get or create base staging directory with date
+    local homeDir = LrPathUtils.getStandardFilePath("home")
+    local stagingDir = LrPathUtils.child(homeDir, "AI_Staging")
+    local currentDate = os.date("%Y-%m-%d")
+    local dateDir = LrPathUtils.child(stagingDir, currentDate)
+    
+    -- Create date directory if it doesn't exist
+    if not LrFileUtils.exists(dateDir) then
+        LrFileUtils.createDirectory(dateDir)
+    end
+    
+    -- Process photos in bursts of 9
+    local burstSize = 9
+    local burstCount = math.ceil(totalCount / burstSize)
+    
+    for burstIndex = 1, burstCount do
+        -- Create burst folder (Burst_001, Burst_002, etc.)
+        local burstFolder = string.format("Burst_%03d", burstIndex)
+        local burstDir = LrPathUtils.child(dateDir, burstFolder)
         
-        local success = BatchProcessor.stagePhotoForProcessing(photo)
-        if success then
-            successCount = successCount + 1
+        if not LrFileUtils.exists(burstDir) then
+            LrFileUtils.createDirectory(burstDir)
+        end
+        
+        -- Process photos for this burst
+        local startPhoto = (burstIndex - 1) * burstSize + 1
+        local endPhoto = math.min(burstIndex * burstSize, totalCount)
+        
+        for photoIndex = startPhoto, endPhoto do
+            local photo = selectedPhotos[photoIndex]
+            
+            progressScope:setCaption("Copying photo " .. photoIndex .. " of " .. totalCount .. " to " .. burstFolder .. "...")
+            progressScope:setPortionComplete(photoIndex / totalCount)
+            
+            local success = BatchProcessor.copyPhotoToBurst(photo, burstDir)
+            if success then
+                successCount = successCount + 1
+            end
         end
     end
     
@@ -94,22 +124,16 @@ function BatchProcessor.processBatchWithProgress(selectedPhotos, progressScope)
     -- Show completion dialog
     LrDialogs.message(
         "Photos Staged for AI Processing",
-        "Successfully copied " .. successCount .. " of " .. totalCount .. " photos to AI_Staging.\n\n" ..
+        "Successfully organized " .. successCount .. " of " .. totalCount .. " photos into " .. burstCount .. " burst folders.\n\n" ..
+        "Structure: AI_Staging/" .. currentDate .. "/Burst_001, Burst_002, etc.\n\n" ..
         "Your photo watcher will detect these files and trigger the automated\n" ..
-        "Croatian Football Federation (HNS) soccer analysis workflow.\n\n" ..
-        "Processed results will appear in AI_Processed when complete.",
+        "Croatian Football Federation (HNS) soccer analysis workflow.",
         "info"
     )
 end
 
--- Copy photo to staging for photo watcher processing
-function BatchProcessor.stagePhotoForProcessing(photo)
-    return BatchProcessor.copyToStaging(photo)
-end
-
--- Copy photo to AI_Staging for photo watcher processing
-function BatchProcessor.copyToStaging(photo)
-    
+-- Copy photo to specific burst directory
+function BatchProcessor.copyPhotoToBurst(photo, burstDir)
     -- Get source file path
     local sourcePath = photo:getRawMetadata('path')
     if not sourcePath then
@@ -117,41 +141,18 @@ function BatchProcessor.copyToStaging(photo)
         return false
     end
     
-    -- Use AI_Staging directory in home folder
-    local homeDir = LrPathUtils.getStandardFilePath("home")
-    local stagingDir = LrPathUtils.child(homeDir, "AI_Staging")
-    
-    -- Verify AI_Staging directory exists
-    if not LrFileUtils.exists(stagingDir) then
-        if log then log:info("AI_Staging directory not found at: " .. stagingDir) end
-        return false
-    end
-    
-    -- Create date-based folder structure (YYYY-MM-DD format)
-    local currentDate = os.date("%Y-%m-%d")
-    local dateDir = LrPathUtils.child(stagingDir, currentDate)
-    
-    -- Create date directory if it doesn't exist
-    if not LrFileUtils.exists(dateDir) then
-        local success = LrFileUtils.createDirectory(dateDir)
-        if not success then
-            if log then log:info("Failed to create date directory: " .. dateDir) end
-            return false
-        end
-    end
-    
-    -- Get filename and create destination path in date folder
+    -- Get filename and create destination path in burst folder
     local filename = LrPathUtils.leafName(sourcePath)
-    local destPath = LrPathUtils.child(dateDir, filename)
+    local destPath = LrPathUtils.child(burstDir, filename)
     
-    -- Copy file to date-organized staging directory (preserve original)
+    -- Copy file to burst directory (preserve original)
     if LrFileUtils.exists(sourcePath) and not LrFileUtils.exists(destPath) then
         local success = LrFileUtils.copy(sourcePath, destPath)
         if log then
             if success then
-                log:info("Copied photo to staging: " .. destPath)
+                log:info("Copied photo to burst: " .. destPath)
             else
-                log:info("Failed to copy photo to AI_Staging directory")
+                log:info("Failed to copy photo to burst directory")
             end
         end
         return success
