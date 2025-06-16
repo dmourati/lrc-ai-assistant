@@ -12,6 +12,7 @@ local LrProgressScope = import 'LrProgressScope'
 local LrExportSession = import 'LrExportSession'
 local LrTasks = import 'LrTasks'
 local JSON = require 'JSON'
+local Defaults = require 'Defaults'
 
 local AssistantAPI = {}
 
@@ -222,8 +223,9 @@ function AssistantAPI.processBatch(selectedPhotos, progressScope)
         if progressScope then progressScope:setCaption("Sending images to AI Assistant...") end
         AssistantAPI.addMessage(threadId, prompt, fileIds)
         
-        -- Run assistant
-        local runId = AssistantAPI.runAssistant(threadId, "Process this batch of related images and generate consistent metadata for each one.")
+        -- Run assistant with HNS system instruction
+        local systemInstruction = AiModelAPI.addKeywordHierarchyToSystemInstruction()
+        local runId = AssistantAPI.runAssistant(threadId, systemInstruction)
         
         -- Wait for completion
         AssistantAPI.waitForCompletion(threadId, runId, progressScope)
@@ -272,17 +274,17 @@ function AssistantAPI.exportTempImage(photo)
     return tempPath
 end
 
--- Create batch processing prompt
+-- Create batch processing prompt using HNS system
 function AssistantAPI.createBatchPrompt(selectedPhotos)
+    -- Use the established HNS prompt system
+    local task = AiModelAPI.generatePromptFromConfiguration()
+    
+    -- Add batch-specific context
     local prompt = "I'm uploading " .. #selectedPhotos .. " related images for batch processing. "
     prompt = prompt .. "Please analyze all images together and generate consistent metadata for each one. "
-    prompt = prompt .. "Consider the relationships between images and maintain thematic consistency. "
-    prompt = prompt .. "\n\nFor each image, provide:\n"
-    prompt = prompt .. "1. Title\n"
-    prompt = prompt .. "2. Caption/Description\n"
-    prompt = prompt .. "3. Keywords (hierarchical)\n"
-    prompt = prompt .. "4. Alt Text\n\n"
-    prompt = prompt .. "Format your response as JSON with an array of metadata objects, one for each image in order."
+    prompt = prompt .. "Consider the relationships between images and maintain thematic consistency.\n\n"
+    prompt = prompt .. task
+    prompt = prompt .. "\n\nFormat your response as JSON with an array of metadata objects, one for each image in the upload order."
     
     return prompt
 end
@@ -315,12 +317,20 @@ function AssistantAPI.parseMetadataResults(messages, selectedPhotos)
     -- Try to parse JSON response
     local success, metadata = pcall(JSON.decode, JSON, responseText)
     if not success then
-        -- Fallback: extract JSON from response text
-        local jsonStart = responseText:find("%[")
-        local jsonEnd = responseText:find("%]", jsonStart)
-        if jsonStart and jsonEnd then
-            local jsonText = responseText:sub(jsonStart, jsonEnd)
+        -- Try to extract JSON from markdown code blocks
+        local jsonText = responseText:match("```json%s*(.-)%s*```")
+        if jsonText then
             success, metadata = pcall(JSON.decode, JSON, jsonText)
+        end
+        
+        -- Fallback: extract JSON array from response text
+        if not success then
+            local jsonStart = responseText:find("%[")
+            local jsonEnd = responseText:find("%]", jsonStart)
+            if jsonStart and jsonEnd then
+                jsonText = responseText:sub(jsonStart, jsonEnd)
+                success, metadata = pcall(JSON.decode, JSON, jsonText)
+            end
         end
     end
     
