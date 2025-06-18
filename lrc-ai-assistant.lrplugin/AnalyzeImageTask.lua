@@ -229,35 +229,6 @@ local function exportAndAnalyzePhoto(photo, progressScope)
                     photo:setRawMetadata('altTextAccessibility', altText)
                 end
                 
-                -- Write player keywords to file metadata for external script access
-                if jerseyNumbers and #jerseyNumbers > 0 then
-                    local playerKeywordsList = {}
-                    for _, jerseyNum in ipairs(jerseyNumbers) do
-                        local playerName, cleanNumber = PlayerRoster.getPlayerName(jerseyNum)
-                        if playerName and cleanNumber then
-                            table.insert(playerKeywordsList, "Fusion")
-                            table.insert(playerKeywordsList, "2016BN5") 
-                            table.insert(playerKeywordsList, playerName)
-                            table.insert(playerKeywordsList, "#" .. cleanNumber)
-                        end
-                    end
-                    
-                    if #playerKeywordsList > 0 then
-                        local existingKeywords = photo:getFormattedMetadata("keywordTagsForExport") or ""
-                        local allKeywords = existingKeywords
-                        for _, keyword in ipairs(playerKeywordsList) do
-                            if not string.find(allKeywords, keyword, 1, true) then
-                                if allKeywords ~= "" then
-                                    allKeywords = allKeywords .. ", " .. keyword
-                                else
-                                    allKeywords = keyword
-                                end
-                            end
-                        end
-                        photo:setRawMetadata('keywords', allKeywords)
-                        log:trace("Wrote player keywords to file metadata: " .. table.concat(playerKeywordsList, ", "))
-                    end
-                end
             end)
 
             if keywords ~= nil and type(keywords) == 'table' then

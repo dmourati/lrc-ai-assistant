@@ -139,7 +139,6 @@ end
 
 -- Export photo as JPG to specific burst directory
 function BatchProcessor.copyPhotoToBurst(photo, burstDir)
-    
     -- Get base filename without extension and create JPG filename
     local sourcePath = photo:getRawMetadata('path')
     if not sourcePath then
