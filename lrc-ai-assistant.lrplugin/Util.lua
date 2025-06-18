@@ -1,4 +1,5 @@
 -- Helper functions
+local inspect = require 'inspect'
 
 Util = {}
 
