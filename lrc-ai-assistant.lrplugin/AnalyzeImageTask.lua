@@ -10,6 +10,12 @@ local LrFileUtils = import 'LrFileUtils'
 local LrDate = import 'LrDate'
 local LrDialogs = import 'LrDialogs'
 
+-- Required modules
+local AnalyzeImageProvider = require 'AnalyzeImageProvider'
+
+-- Localization
+local LOC = import 'LrLocalization'.LOC
+
 SkipReviewCaptions = false
 SkipReviewTitles = false
 SkipReviewAltText = false
