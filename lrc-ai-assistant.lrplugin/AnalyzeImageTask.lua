@@ -13,6 +13,7 @@ local LrDialogs = import 'LrDialogs'
 -- Required modules
 local AiModelAPI = require 'AiModelAPI'
 local Util = require 'Util'
+local PlayerRoster = require 'PlayerRoster'
 
 -- Module will be loaded when needed to avoid initialization issues
 local AnalyzeImageProvider
@@ -104,16 +105,58 @@ local function exportAndAnalyzePhoto(photo, progressScope)
                 return false, inputTokens, outputTokens, "non-fatal", result
             end
 
-            local title, caption, keywords, altText
+            local title, caption, keywords, altText, jerseyNumbers
             if result ~= nil and analyzeSuccess then
-                keywords = result.keywords
-                log:trace(Util.dumpTable(keywords))
+                keywords = result.keywords or {}
                 title = result["Image title"]
-                log:trace(title)
                 caption = result["Image caption"]
-                log:trace(caption)
                 altText = result["Image Alt Text"]
-                log:trace(altText)
+                jerseyNumbers = result["jersey_numbers"] or {}
+                
+                -- Process jersey numbers and add player names as keywords
+                if jerseyNumbers and #jerseyNumbers > 0 then
+                    log:trace("Found jersey numbers: " .. table.concat(jerseyNumbers, ", "))
+                    
+                    for _, jerseyNum in ipairs(jerseyNumbers) do
+                        -- Generate keywords for this jersey number
+                        local playerKeywords = PlayerRoster.generateKeywords(jerseyNum)
+                        
+                        -- Add player keywords to the main keywords list
+                        for _, keyword in ipairs(playerKeywords) do
+                            table.insert(keywords, keyword)
+                        end
+                        
+                        log:trace("Added keywords for jersey #" .. jerseyNum .. ": " .. table.concat(playerKeywords, ", "))
+                    end
+                end
+                
+                -- Also check caption and title for jersey numbers (fallback)
+                local fallbackNumbers = {}
+                if caption then
+                    local captionNumbers = PlayerRoster.extractJerseyNumbers(caption)
+                    for _, num in ipairs(captionNumbers) do
+                        table.insert(fallbackNumbers, num)
+                    end
+                end
+                if title then
+                    local titleNumbers = PlayerRoster.extractJerseyNumbers(title)
+                    for _, num in ipairs(titleNumbers) do
+                        table.insert(fallbackNumbers, num)
+                    end
+                end
+                
+                -- Add fallback jersey number keywords if any were found
+                if #fallbackNumbers > 0 then
+                    log:trace("Found additional jersey numbers in text: " .. table.concat(fallbackNumbers, ", "))
+                    for _, jerseyNum in ipairs(fallbackNumbers) do
+                        local playerKeywords = PlayerRoster.generateKeywords(jerseyNum)
+                        for _, keyword in ipairs(playerKeywords) do
+                            table.insert(keywords, keyword)
+                        end
+                    end
+                end
+                
+                log:trace("Final keywords: " .. table.concat(keywords, ", "))
             end
 
             local canceledByUser = false

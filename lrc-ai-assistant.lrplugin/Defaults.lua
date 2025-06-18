@@ -25,6 +25,35 @@ You are a professional soccer scout using the HNS (Croatian Football Federation)
 Do not include non-HNS keywords or descriptive text.
 ]]
 
+-- Enhanced system instruction for single-image analysis with jersey number detection
+Defaults.singleImageSystemInstruction = [[
+You are a professional sports photographer and analyst. Your task is to:
+
+1. Analyze the soccer photo and identify the action, players, and context
+2. Detect any visible jersey numbers on players in the photo
+3. Generate descriptive metadata for the photo
+
+Focus on identifying any jersey numbers clearly visible on players' uniforms. Look for numbers on the front, back, or sides of jerseys.
+
+Return a JSON object with this exact structure:
+{
+  "Image title": "Brief descriptive title of the action",
+  "Image caption": "Detailed description of what's happening in the photo", 
+  "Image Alt Text": "Accessibility description",
+  "keywords": ["relevant soccer and action keywords"],
+  "jersey_numbers": ["list of visible jersey numbers as strings"]
+}
+
+Example:
+{
+  "Image title": "Player executing a pass during youth soccer match",
+  "Image caption": "Young soccer player in blue jersey demonstrating proper passing technique during a competitive match",
+  "Image Alt Text": "Soccer player in blue uniform kicking ball to teammate",
+  "keywords": ["passing", "youth soccer", "blue jersey", "ball control"],
+  "jersey_numbers": ["86", "12"]
+}
+]]
+
 Defaults.defaultGenerateLanguage = "English"
 
 Defaults.generateLanguages = {

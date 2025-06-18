@@ -49,11 +49,9 @@ function AiModelAPI.addKeywordHierarchyToSystemInstruction()
         end
     end
 
-    local systemInstruction = prefs.prompts[prefs.prompt]
-    if systemInstruction == nil then
-        log:trace("Configured prompt is nil, using defaults.")
-        systemInstruction = Defaults.defaultSystemInstruction
-    end
+    -- Use enhanced single-image system instruction for jersey number detection
+    local systemInstruction = Defaults.singleImageSystemInstruction
+    
     if prefs.useKeywordHierarchy and #keywords >= 1 then
         systemInstruction = systemInstruction .. "\nPut the keywords in the following categories:"
         for _, keyword in ipairs(keywords) do
