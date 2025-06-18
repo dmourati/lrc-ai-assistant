@@ -1,5 +1,10 @@
 -- Helper functions
 local inspect = require 'inspect'
+local LrStringUtils = import 'LrStringUtils'
+local LrDialogs = import 'LrDialogs'
+local LrPathUtils = import 'LrPathUtils'
+local LrApplication = import 'LrApplication'
+local LrSystemInfo = import 'LrSystemInfo'
 
 Util = {}
 

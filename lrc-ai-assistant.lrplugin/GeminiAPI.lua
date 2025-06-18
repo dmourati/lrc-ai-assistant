@@ -1,4 +1,5 @@
 require 'Defaults'
+local LrHttp = import 'LrHttp'
 local JSON = require 'JSON'
 local ResponseStructure = require 'ResponseStructure'
 
