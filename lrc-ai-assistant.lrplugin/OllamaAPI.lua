@@ -1,4 +1,9 @@
 require 'Defaults'
+local LrHttp = import 'LrHttp'
+local LrFileUtils = import 'LrFileUtils'
+local LrPathUtils = import 'LrPathUtils'
+local JSON = require 'JSON'
+local ResponseStructure = require 'ResponseStructure'
 
 OllamaAPI = {}
 OllamaAPI.__index = OllamaAPI
@@ -199,3 +204,5 @@ function OllamaAPI:analyzeImage(filePath, metadata)
     end
     return false, "", inputTokenCount, outputTokenCount
 end
+
+return OllamaAPI

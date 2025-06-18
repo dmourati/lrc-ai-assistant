@@ -1,4 +1,9 @@
 require 'Defaults'
+local LrHttp = import 'LrHttp'
+local LrFileUtils = import 'LrFileUtils'
+local LrPathUtils = import 'LrPathUtils'
+local JSON = require 'JSON'
+local ResponseStructure = require 'ResponseStructure'
 
 LmStudioAPI = {}
 LmStudioAPI.__index = LmStudioAPI
@@ -100,3 +105,5 @@ function LmStudioAPI:analyzeImage(filePath, metadata)
     end
     return false, "", inputTokenCount, outputTokenCount
 end
+
+return LmStudioAPI

@@ -147,3 +147,5 @@ function ResponseStructure:keywordTableToResponseStructureRecurse(table)
 
     return responseStructure
 end
+
+return ResponseStructure
