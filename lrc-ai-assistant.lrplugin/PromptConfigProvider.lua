@@ -1,4 +1,6 @@
 require 'Defaults'
+local LrView = import 'LrView'
+local LrDialogs = import 'LrDialogs'
 
 PromptConfigProvider = {}
 
@@ -172,3 +174,5 @@ function PromptConfigProvider.showPromptConfigDialog(propertyTable)
         prefs.prompt = "Default"
     end
 end
+
+return PromptConfigProvider
