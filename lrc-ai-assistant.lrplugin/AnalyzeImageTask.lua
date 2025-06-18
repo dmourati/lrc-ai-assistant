@@ -123,8 +123,18 @@ local function exportAndAnalyzePhoto(photo, progressScope)
                         local playerKeywords = PlayerRoster.generateKeywords(jerseyNum)
                         
                         -- Add to hierarchical keywords list
-                        for _, keyword in ipairs(playerKeywords) do
-                            table.insert(playerHierarchicalKeywords, keyword)
+                        if playerKeywords and next(playerKeywords) then
+                            table.insert(playerHierarchicalKeywords, playerKeywords)
+                        end
+                        
+                        -- Also add flat keywords for easier searching
+                        local playerName, cleanNumber = PlayerRoster.getPlayerName(jerseyNum)
+                        if playerName and cleanNumber then
+                            -- Add individual flat keywords
+                            table.insert(keywords, playerName)
+                            table.insert(keywords, "#" .. cleanNumber)
+                            table.insert(keywords, "Fusion")
+                            table.insert(keywords, "2016BN5")
                         end
                         
                         log:trace("Added hierarchical keywords for jersey #" .. jerseyNum)

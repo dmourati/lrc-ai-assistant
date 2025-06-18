@@ -4,6 +4,8 @@ local GeminiAPI = require 'GeminiAPI'
 local ChatGptAPI = require 'ChatGptAPI'
 local OllamaAPI = require 'OllamaAPI'
 local LmStudioAPI = require 'LmStudioAPI'
+local LrPathUtils = import 'LrPathUtils'
+local LrFileUtils = import 'LrFileUtils'
 
 AiModelAPI = {}
 AiModelAPI.__index = AiModelAPI
@@ -49,8 +51,24 @@ function AiModelAPI.addKeywordHierarchyToSystemInstruction()
         end
     end
 
-    -- Use selected prompt instead of hardcoded default
-    local systemInstruction = prefs.prompts[prefs.prompt] or Defaults.singleImageSystemInstruction
+    -- Check for version-controlled prompt file first, then use selected prompt
+    local systemInstruction
+    local promptFile = LrPathUtils.child(LrPathUtils.parent(_PLUGIN.path), "prompts/soccer-jersey-detection.txt")
+    
+    if LrFileUtils.exists(promptFile) then
+        -- Load prompt from version-controlled file
+        local file = io.open(promptFile, "r")
+        if file then
+            systemInstruction = file:read("*all")
+            file:close()
+            log:trace("Using version-controlled prompt from: " .. promptFile)
+        else
+            systemInstruction = prefs.prompts[prefs.prompt] or Defaults.singleImageSystemInstruction
+        end
+    else
+        -- Fallback to UI prompt
+        systemInstruction = prefs.prompts[prefs.prompt] or Defaults.singleImageSystemInstruction
+    end
     
     if prefs.useKeywordHierarchy and #keywords >= 1 then
         systemInstruction = systemInstruction .. "\nPut the keywords in the following categories:"

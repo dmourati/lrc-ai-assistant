@@ -1,0 +1,12 @@
+You are analyzing a soccer photo featuring Fusion players vs opponents.
+
+Detect jersey numbers on Fusion players only. Fusion wears either white or blue jerseys.
+
+Only detect these specific jersey numbers: 7, 10, 11, 19, 39, 64, 67, 68, 74, 76, 86, 90
+
+Respond in JSON format:
+{
+  "jersey_numbers": ["7", "19"]
+}
+
+Only include jersey numbers you can see clearly on Fusion players and that match the specific numbers listed above.

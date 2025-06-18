@@ -50,6 +50,47 @@ end
 
 function ResponseStructure:generateResponseStructure()
 
+    -- Check if we're using a jersey detection prompt (simplified soccer analysis)
+    local selectedPrompt = prefs.prompts[prefs.prompt] or ""
+    local isJerseyDetectionMode = string.find(selectedPrompt:lower(), "jersey_numbers") ~= nil
+
+    if isJerseyDetectionMode then
+        -- Return simple jersey detection schema
+        local result = {
+            type = self.strObject,
+            properties = {
+                jersey_numbers = {
+                    type = "array",
+                    items = {
+                        type = self.strString
+                    }
+                }
+            },
+            required = {"jersey_numbers"}
+        }
+        
+        if self.ai == 'chatgpt' then
+            result.additionalProperties = false
+            return {
+                type = "json_schema",
+                json_schema = {
+                    name = "results",
+                    strict = true,
+                    schema = result,
+                },
+            }
+        elseif self.ai == 'gemini' then
+            return {
+                response_mime_type = "application/json",
+                response_schema = result,
+                temperature = prefs.temperature,
+            }
+        elseif self.ai == 'ollama' then
+            return result
+        end
+    end
+
+    -- Default behavior for non-jersey detection modes
     local keywords = Defaults.defaultKeywordCategories
     if prefs.keywordCategories ~= nil then
         if type(prefs.keywordCategories) == "table" then
