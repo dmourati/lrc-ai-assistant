@@ -11,7 +11,7 @@ local LrFileUtils = import 'LrFileUtils'
 AnalyzeImageProvider = {}
 
 -- Helper function to get LOC
-local function getgetLOC()()
+local function getLOC()
     return import 'LrLocalization'.LOC
 end
 
