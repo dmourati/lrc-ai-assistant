@@ -72,32 +72,31 @@ function PlayerRoster.extractJerseyNumbers(text)
     return result
 end
 
--- Function to generate keywords for jersey number and player
+-- Function to generate hierarchical keywords for jersey number and player
+-- Structure: Fusion > 2016BN5 > Player Name > Jersey Number
 function PlayerRoster.generateKeywords(jerseyNumber)
     local keywords = {}
     
     local playerName, cleanNumber = PlayerRoster.getPlayerName(jerseyNumber)
     
-    -- Add jersey number keyword
-    if cleanNumber then
-        table.insert(keywords, "Jersey " .. cleanNumber)
-        table.insert(keywords, "#" .. cleanNumber)
-    end
-    
-    -- Add player name keyword
-    if playerName then
-        table.insert(keywords, playerName)
+    if playerName and cleanNumber then
+        -- Create hierarchical keyword structure
+        local hierarchicalKeyword = {
+            category = "Fusion",
+            keywords = {
+                {
+                    category = "2016BN5",
+                    keywords = {
+                        {
+                            category = playerName,
+                            keywords = {"#" .. cleanNumber}
+                        }
+                    }
+                }
+            }
+        }
         
-        -- Also add first and last name separately if it contains spaces
-        local nameParts = {}
-        for part in playerName:gmatch("%S+") do
-            table.insert(nameParts, part)
-        end
-        
-        if #nameParts > 1 then
-            table.insert(keywords, nameParts[1]) -- First name
-            table.insert(keywords, nameParts[#nameParts]) -- Last name
-        end
+        table.insert(keywords, hierarchicalKeyword)
     end
     
     return keywords

@@ -113,20 +113,21 @@ local function exportAndAnalyzePhoto(photo, progressScope)
                 altText = result["Image Alt Text"]
                 jerseyNumbers = result["jersey_numbers"] or {}
                 
-                -- Process jersey numbers and add player names as keywords
+                -- Process jersey numbers and generate hierarchical player keywords
+                local playerHierarchicalKeywords = {}
                 if jerseyNumbers and #jerseyNumbers > 0 then
                     log:trace("Found jersey numbers: " .. table.concat(jerseyNumbers, ", "))
                     
                     for _, jerseyNum in ipairs(jerseyNumbers) do
-                        -- Generate keywords for this jersey number
+                        -- Generate hierarchical keywords for this jersey number
                         local playerKeywords = PlayerRoster.generateKeywords(jerseyNum)
                         
-                        -- Add player keywords to the main keywords list
+                        -- Add to hierarchical keywords list
                         for _, keyword in ipairs(playerKeywords) do
-                            table.insert(keywords, keyword)
+                            table.insert(playerHierarchicalKeywords, keyword)
                         end
                         
-                        log:trace("Added keywords for jersey #" .. jerseyNum .. ": " .. table.concat(playerKeywords, ", "))
+                        log:trace("Added hierarchical keywords for jersey #" .. jerseyNum)
                     end
                 end
                 
@@ -151,12 +152,12 @@ local function exportAndAnalyzePhoto(photo, progressScope)
                     for _, jerseyNum in ipairs(fallbackNumbers) do
                         local playerKeywords = PlayerRoster.generateKeywords(jerseyNum)
                         for _, keyword in ipairs(playerKeywords) do
-                            table.insert(keywords, keyword)
+                            table.insert(playerHierarchicalKeywords, keyword)
                         end
                     end
                 end
                 
-                log:trace("Final keywords: " .. table.concat(keywords, ", "))
+                log:trace("Final keywords: " .. (keywords and table.concat(keywords, ", ") or "none"))
             end
 
             local canceledByUser = false
@@ -221,6 +222,14 @@ local function exportAndAnalyzePhoto(photo, progressScope)
                     end)
                 end
                 AnalyzeImageProvider.addKeywordRecursively(photo, keywords, topKeyword)
+            end
+            
+            -- Add hierarchical player keywords (Fusion > 2016BN5 > Player > Jersey#)
+            if playerHierarchicalKeywords and #playerHierarchicalKeywords > 0 then
+                for _, playerKeyword in ipairs(playerHierarchicalKeywords) do
+                    AnalyzeImageProvider.addKeywordRecursively(photo, playerKeyword, nil)
+                end
+                log:trace("Added " .. #playerHierarchicalKeywords .. " hierarchical player keyword structures")
             end
 
             -- Delete temp file.
