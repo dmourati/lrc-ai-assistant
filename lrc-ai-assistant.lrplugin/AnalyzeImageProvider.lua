@@ -10,8 +10,7 @@ local LrFileUtils = import 'LrFileUtils'
 
 AnalyzeImageProvider = {}
 
--- LOC will be initialized when first needed
-local LOC
+-- LOC removed due to loading order issues
 
 
 function AnalyzeImageProvider.addKeywordRecursively(photo, keywordSubTable, parent)
@@ -44,11 +43,6 @@ end
 
 
 function AnalyzeImageProvider.showTextValidationDialog(typeOfText, text)
-    -- Initialize LOC if not already done
-    if not LOC then
-        LOC = import 'LrLocalization'.LOC
-    end
-    
     local f = LrView.osFactory()
     local bind = LrView.bind
     local share = LrView.share
@@ -76,14 +70,14 @@ function AnalyzeImageProvider.showTextValidationDialog(typeOfText, text)
                 value = bind 'skipFromHere'
             },
             f:static_text {
-                title = LOC("$$$/lrc-ai-assistant/AnalyzeImageTask/SkipFromHere=Save following without reviewing."),
+                title = "Save following without reviewing.",
             },
         },
     }
 
     local result = LrDialogs.presentModalDialog({
         -- title = 'Review Results',
-        title = LOC("$$$/lrc-ai-assistant/AnalyzeImageTask/ReviewWindowTitle=Review results"),
+        title = "Review results",
         contents = dialogView,
     })
 
@@ -95,11 +89,6 @@ function AnalyzeImageProvider.showTextValidationDialog(typeOfText, text)
 end
 
 function AnalyzeImageProvider.showUsedTokensDialog(totalInputTokens, totalOutputTokens)
-    -- Initialize LOC if not already done
-    if not LOC then
-        LOC = import 'LrLocalization'.LOC
-    end
-    
     if Defaults.pricing[prefs.ai] == nil then
         log:trace("No cost information for selected AI model, not showing usedTokenDialog.")
         return nil
@@ -127,7 +116,7 @@ function AnalyzeImageProvider.showUsedTokensDialog(totalInputTokens, totalOutput
         local f = LrView.osFactory()
         local share = LrView.share
         local dialog = {}
-        dialog.title = LOC("$$$/lrc-ai-assistant/AnalyzeImageTask/UsedTokenDialog/Title=Generation costs")
+        dialog.title = "Generation costs"
         dialog.resizable = false
         dialog.contents = f:column {
             f:row {
@@ -135,7 +124,7 @@ function AnalyzeImageProvider.showUsedTokensDialog(totalInputTokens, totalOutput
                 f:column {
                     f:group_box {
                         width = share 'groupBoxWidth',
-                        title = LOC("$$$/lrc-ai-assistant/AnalyzeImageTask/UsedTokenDialog/UsedTokens=Used Tokens"),
+                        title = "Used Tokens",
                         f:spacer {
                             width = share 'spacerWidth',
                         },
@@ -161,7 +150,7 @@ function AnalyzeImageProvider.showUsedTokensDialog(totalInputTokens, totalOutput
                     size = "small",
                     f:group_box {
                         width = share 'groupBoxWidth',
-                        title = LOC("$$$/lrc-ai-assistant/AnalyzeImageTask/UsedTokenDialog/GeneratedCosts=Generated costs"),
+                        title = "Generated costs",
                         f:spacer {
                             width = share 'spacerWidth',
                         },
@@ -192,7 +181,7 @@ function AnalyzeImageProvider.showUsedTokensDialog(totalInputTokens, totalOutput
             f:row {
                 font = "<system/bold>",
                 f:static_text {
-                    title = LOC("$$$/lrc-ai-assistant/AnalyzeImageTask/UsedTokenDialog/TotalCosts=Total costs:"),
+                    title = "Total costs:",
                 },
                 f:static_text {
                     title = tostring(totalCosts) .. " USD",
@@ -207,11 +196,6 @@ end
 
 
 function AnalyzeImageProvider.showPhotoContextDialog(photo)
-    -- Initialize LOC if not already done
-    if not LOC then
-        LOC = import 'LrLocalization'.LOC
-    end
-    
     local f = LrView.osFactory()
     local bind = LrView.bind
     local share = LrView.share
@@ -285,7 +269,7 @@ function AnalyzeImageProvider.showPhotoContextDialog(photo)
         },
         f:row {
             f:static_text {
-                title = LOC("$$$/lrc-ai-assistant/AnalyzeImageTask/PhotoContextDialogData=Photo Context"),
+                title = "Photo Context",
             },
         },
         f:row {
@@ -310,13 +294,13 @@ function AnalyzeImageProvider.showPhotoContextDialog(photo)
                 value = bind 'skipFromHere'
             },
             f:static_text {
-                title = LOC("$$$/lrc-ai-assistant/AnalyzeImageTask/SkipPreflightFromHere=Use for all following pictures."),
+                title = "Use for all following pictures.",
             },
         },
     }
 
     local result = LrDialogs.presentModalDialog({
-        title = LOC("$$$/lrc-ai-assistant/AnalyzeImageTask/PhotoContextDialogData=Photo Context"),
+        title = "Photo Context",
         contents = dialogView,
     })
 
@@ -334,11 +318,6 @@ function AnalyzeImageProvider.showPhotoContextDialog(photo)
 end
 
 function AnalyzeImageProvider.showPreflightDialog(ctx)
-    -- Initialize LOC if not already done
-    if not LOC then
-        LOC = import 'LrLocalization'.LOC
-    end
-    
     local f = LrView.osFactory()
     local bind = LrView.bind
     local share = LrView.share
@@ -446,7 +425,7 @@ function AnalyzeImageProvider.showPreflightDialog(ctx)
         f:row {
             f:static_text {
                 width = share 'labelWidth',
-                title = LOC("$$$/lrc-ai-assistant/PluginInfoDialogSections/generateLanguage=Result language"),
+                title = "Result language",
             },
             f:popup_menu {
                 value = bind 'generateLanguage',
@@ -485,7 +464,7 @@ function AnalyzeImageProvider.showPreflightDialog(ctx)
                 width = share 'checkboxWidth'
             },
             f:static_text {
-                title = LOC("$$$/lrc-ai-assistant/PluginInfoDialogSections/showCosts=Show costs (without any warranty!!!)"),
+                title = "Show costs (without any warranty!!!)",
             },
         },
         f:row {
@@ -499,28 +478,28 @@ function AnalyzeImageProvider.showPreflightDialog(ctx)
                 width = share 'checkboxWidth',
             },
             f:static_text {
-                title = LOC("$$$/lrc-ai-assistant/PluginInfoDialogSections/caption=Caption"),
+                title = "Caption",
             },
             f:checkbox {
                 value = bind 'generateAltText',
                 width = share 'checkboxWidth',
             },
             f:static_text {
-                title = LOC("$$$/lrc-ai-assistant/PluginInfoDialogSections/alttext=Alt Text"),
+                title = "Alt Text",
             },
             f:checkbox {
                 value = bind 'generateTitle',
                 width = share 'checkboxWidth',
             },
             f:static_text {
-                title = LOC("$$$/lrc-ai-assistant/PluginInfoDialogSections/title=Title"),
+                title = "Title",
             },
             f:checkbox {
                 value = bind 'generateKeywords',
                 width = share 'checkboxWidth',
             },
             f:static_text {
-                title = LOC("$$$/lrc-ai-assistant/PluginInfoDialogSections/keywords=Keywords"),
+                title = "Keywords",
             },
         },
         f:row {
@@ -535,7 +514,7 @@ function AnalyzeImageProvider.showPreflightDialog(ctx)
                 enabled = bind 'generateCaption',
             },
             f:static_text {
-                title = LOC("$$$/lrc-ai-assistant/PluginInfoDialogSections/caption=Caption"),
+                title = "Caption",
             },
             f:checkbox {
                 value = bind 'reviewAltText',
@@ -543,7 +522,7 @@ function AnalyzeImageProvider.showPreflightDialog(ctx)
                 enabled = bind 'generateAltText',
             },
             f:static_text {
-                title = LOC("$$$/lrc-ai-assistant/PluginInfoDialogSections/alttext=Alt Text"),
+                title = "Alt Text",
             },
             f:checkbox {
                 value = bind 'reviewTitle',
@@ -551,7 +530,7 @@ function AnalyzeImageProvider.showPreflightDialog(ctx)
                 enabled = bind 'generateTitle',
             },
             f:static_text {
-                title = LOC("$$$/lrc-ai-assistant/PluginInfoDialogSections/title=Title"),
+                title = "Title",
             },
             f:checkbox {
                 value = bind 'reviewKeywords',
@@ -559,7 +538,7 @@ function AnalyzeImageProvider.showPreflightDialog(ctx)
                 enabled = false,
             },
             f:static_text {
-                title = LOC("$$$/lrc-ai-assistant/PluginInfoDialogSections/keywords=Keywords"),
+                title = "Keywords",
             },
         },
         f:row {
@@ -573,14 +552,14 @@ function AnalyzeImageProvider.showPreflightDialog(ctx)
                 width = share 'checkboxWidth'
             },
             f:static_text {
-                title = LOC("$$$/lrc-ai-assistant/PluginInfoDialogSections/showPhotoContextDialog=Show Photo Context dialog"),
+                title = "Show Photo Context dialog",
                 width = share 'labelWidth',
             },
         },
     }
 
     local result = LrDialogs.presentModalDialog({
-        title = LOC("$$$/lrc-ai-assistant/AnalyzeImageTask/PreflightDialogTitle=Preflight Dialog"),
+        title = "Preflight Dialog",
         contents = dialogView,
     })
 
