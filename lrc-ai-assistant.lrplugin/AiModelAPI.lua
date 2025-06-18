@@ -51,22 +51,29 @@ function AiModelAPI.addKeywordHierarchyToSystemInstruction()
         end
     end
 
-    -- Check for version-controlled prompt file first, then use selected prompt
+    -- Check if we should use version-controlled prompt for soccer jersey detection
     local systemInstruction
-    local promptFile = LrPathUtils.child(LrPathUtils.parent(_PLUGIN.path), "prompts/soccer-jersey-detection.txt")
     
-    if LrFileUtils.exists(promptFile) then
-        -- Load prompt from version-controlled file
-        local file = io.open(promptFile, "r")
-        if file then
-            systemInstruction = file:read("*all")
-            file:close()
-            log:trace("Using version-controlled prompt from: " .. promptFile)
+    if prefs.prompt == "Soccer Single Image Analysis" then
+        -- Try to load from version-controlled file
+        local promptFile = LrPathUtils.child(LrPathUtils.parent(_PLUGIN.path), "prompts/soccer-jersey-detection.txt")
+        
+        if LrFileUtils.exists(promptFile) then
+            local file = io.open(promptFile, "r")
+            if file then
+                systemInstruction = file:read("*all")
+                file:close()
+                log:trace("Using version-controlled soccer prompt from: " .. promptFile)
+            else
+                -- Fallback to UI prompt if file can't be read
+                systemInstruction = prefs.prompts[prefs.prompt] or Defaults.singleImageSystemInstruction
+            end
         else
+            -- Fallback to UI prompt if file doesn't exist
             systemInstruction = prefs.prompts[prefs.prompt] or Defaults.singleImageSystemInstruction
         end
     else
-        -- Fallback to UI prompt
+        -- Use UI prompt for non-soccer prompts
         systemInstruction = prefs.prompts[prefs.prompt] or Defaults.singleImageSystemInstruction
     end
     
