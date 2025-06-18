@@ -284,6 +284,16 @@ LrTasks.startAsyncTask(function()
 
         local catalog = LrApplication.activeCatalog()
         local selectedPhotos = catalog:getTargetPhotos()
+        
+        -- Randomize photo order for better coverage in large batches
+        if #selectedPhotos > 1 then
+            math.randomseed(os.time())
+            for i = #selectedPhotos, 2, -1 do
+                local j = math.random(i)
+                selectedPhotos[i], selectedPhotos[j] = selectedPhotos[j], selectedPhotos[i]
+            end
+            log:trace("Randomized order of " .. #selectedPhotos .. " photos")
+        end
 
         log:trace("Starting AnalyzeImageTask")
 
