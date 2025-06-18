@@ -1,4 +1,15 @@
 
+-- Required imports
+local LrTasks = import 'LrTasks'
+local LrFunctionContext = import 'LrFunctionContext'
+local LrProgressScope = import 'LrProgressScope'
+local LrPathUtils = import 'LrPathUtils'
+local LrApplication = import 'LrApplication'
+local LrExportSession = import 'LrExportSession'
+local LrFileUtils = import 'LrFileUtils'
+local LrDate = import 'LrDate'
+local LrDialogs = import 'LrDialogs'
+
 SkipReviewCaptions = false
 SkipReviewTitles = false
 SkipReviewAltText = false
