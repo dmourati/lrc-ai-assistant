@@ -167,7 +167,8 @@ function BatchProcessor.copyPhotoToBurst(photo, burstDir)
         LR_renamingTokensOn = true,
         LR_tokens = jpgFilename:gsub("%.jpg$", ""), -- Remove .jpg for token
         LR_tokenCustomString = "",
-        LR_collisionHandling = "overwrite"
+        LR_collisionHandling = "overwrite",
+        LR_embeddedMetadataOption = "all"
     }
     
     -- Perform export
