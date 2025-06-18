@@ -21,6 +21,10 @@ function AnalyzeImageProvider.addKeywordRecursively(photo, keywordSubTable, pare
                 -- Some ollama models return "None" or "none" if a keyword category is empty.
                 if prefs.useKeywordHierarchy and key ~= "None" and key ~= "none" then
                     keyword = photo.catalog:createKeyword(key, {}, false, parent, true)
+                    -- Add the keyword to the photo if it's a leaf node (no children)
+                    if type(value) ~= 'table' then
+                        photo:addKeyword(keyword)
+                    end
                 end
             end)
         elseif type(key) == 'number' and value ~= nil and value ~= "" then
@@ -37,6 +41,12 @@ function AnalyzeImageProvider.addKeywordRecursively(photo, keywordSubTable, pare
         end
         if type(value) == 'table' then
             AnalyzeImageProvider.addKeywordRecursively(photo, value, keyword)
+        elseif type(value) == 'string' and keyword then
+            -- Handle case where value is a string (like "#19")
+            photo.catalog:withWriteAccessDo("Add leaf keyword", function()
+                local leafKeyword = photo.catalog:createKeyword(value, {}, true, keyword, true)
+                photo:addKeyword(leafKeyword)
+            end)
         end
     end
 end
