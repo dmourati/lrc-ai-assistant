@@ -102,13 +102,15 @@ end
 
 
 function ChatGptAPI:analyzeImage(filePath, metadata)
-    local task = AiModelAPI.generatePromptFromConfiguration()
+    -- For single-image analysis, use only the selected prompt as system instruction
+    -- Don't use the additional task prompt which is meant for batch processing
+    local task = ""
     if metadata ~= nil then
         if prefs.submitGPS and metadata.gps ~= nil then
-            task = task .. " " .. "\nThis photo was taken at the following coordinates:" .. metadata.gps.latitude .. ", " .. metadata.gps.longitude
+            task = task .. "\nThis photo was taken at the following coordinates:" .. metadata.gps.latitude .. ", " .. metadata.gps.longitude
         end
         if prefs.submitKeywords and metadata.keywords ~= nil then
-            task = task .. " " .. "\nSome keywords are:" .. metadata.keywords
+            task = task .. "\nSome keywords are:" .. metadata.keywords
         end
         if metadata.context ~= nil and metadata.context ~= "" then
             log:trace("Preflight context given")
