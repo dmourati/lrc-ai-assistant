@@ -13,20 +13,38 @@ AiModelAPI.__index = AiModelAPI
 function AiModelAPI:new()
     local instance = setmetatable({}, AiModelAPI)
 
-    if string.sub(prefs.ai, 1, 6) == 'gemini' then
+    -- Override model for soccer jersey detection
+    local effectiveModel = prefs.ai
+    if prefs.prompt == "Soccer Single Image Analysis" then
+        effectiveModel = "gpt-4o-mini"
+        log:trace("Overriding model to gpt-4o-mini for soccer jersey detection")
+    end
+
+    -- Store original model and temporarily override prefs.ai if needed
+    local originalModel = prefs.ai
+    if effectiveModel ~= originalModel then
+        prefs.ai = effectiveModel
+    end
+
+    if string.sub(effectiveModel, 1, 6) == 'gemini' then
         self.usedApi = GeminiAPI:new()
         self.topKeyword = Defaults.googleTopKeyword
-    elseif string.sub(prefs.ai, 1, 3) == 'gpt' then
+    elseif string.sub(effectiveModel, 1, 3) == 'gpt' then
         self.usedApi = ChatGptAPI:new()
         self.topKeyword = Defaults.chatgptTopKeyword
-    elseif string.sub(prefs.ai, 1, 6) == 'ollama' then
+    elseif string.sub(effectiveModel, 1, 6) == 'ollama' then
         self.usedApi = OllamaAPI:new()
         self.topKeyword = Defaults.ollamaTopKeyWord
-    elseif string.sub(prefs.ai, 1, 8) == 'lmstudio' then
+    elseif string.sub(effectiveModel, 1, 8) == 'lmstudio' then
         self.usedApi = LmStudioAPI:new()
         self.topKeyword = Defaults.lmStudioTopKeyWord
     else
         Util.handleError('Configuration error: No valid AI model selected, check Module Manager for Configuration', LOC("$$$/lrc-ai-assistant/AiModelAPI/NoModelSelectedError=No AI model selected, check Configuration in Add-Ons manager"))
+    end
+    
+    -- Restore original model setting
+    if effectiveModel ~= originalModel then
+        prefs.ai = originalModel
     end
 
     
