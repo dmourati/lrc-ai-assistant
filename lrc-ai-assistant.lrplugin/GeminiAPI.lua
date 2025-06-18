@@ -11,16 +11,14 @@ local Util
 GeminiAPI.__index = GeminiAPI
 
 function GeminiAPI:new()
-    -- Lazy load Util when first needed
-    if not Util then
-        Util = require 'Util'
-    end
-    
     local o = setmetatable({}, GeminiAPI)
     self.rateLimitHit = 0
 
-    if Util.nilOrEmpty(prefs.geminiApiKey) then
-        Util.handleError('Gemini API key not configured.', "No Gemini API key configured in add-ons manager.")
+    -- Simple nil/empty check instead of Util.nilOrEmpty
+    if not prefs.geminiApiKey or prefs.geminiApiKey == "" then
+        -- Simple error handling instead of Util.handleError
+        if log then log:error('Gemini API key not configured.') end
+        error("No Gemini API key configured in add-ons manager.")
         return nil
     else
         self.apiKey = prefs.geminiApiKey

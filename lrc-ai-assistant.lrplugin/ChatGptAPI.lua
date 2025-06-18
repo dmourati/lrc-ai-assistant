@@ -9,15 +9,13 @@ local Util
 ChatGptAPI.__index = ChatGptAPI
 
 function ChatGptAPI:new()
-    -- Lazy load Util when first needed
-    if not Util then
-        Util = require 'Util'
-    end
-    
     local o = setmetatable({}, ChatGptAPI)
 
-    if Util.nilOrEmpty(prefs.chatgptApiKey) then
-        Util.handleError('ChatGPT API key not configured.', "No ChatGPT API key configured in Add-Ons manager.")
+    -- Simple nil/empty check instead of Util.nilOrEmpty
+    if not prefs.chatgptApiKey or prefs.chatgptApiKey == "" then
+        -- Simple error handling instead of Util.handleError
+        if log then log:error('ChatGPT API key not configured.') end
+        error("No ChatGPT API key configured in Add-Ons manager.")
         return nil
     else
         self.apiKey = prefs.chatgptApiKey
@@ -49,7 +47,10 @@ function ChatGptAPI:doRequest(filePath, task, systemInstruction, generationConfi
                     {
                         type = "image_url",
                         image_url = {
-                            url = "data:image/jpeg;base64," .. Util.encodePhotoToBase64(filePath)
+                            url = "data:image/jpeg;base64," .. (function()
+                                if not Util then Util = require 'Util' end
+                                return Util.encodePhotoToBase64(filePath)
+                            end)()
                         }
                     }
                 }
@@ -58,7 +59,10 @@ function ChatGptAPI:doRequest(filePath, task, systemInstruction, generationConfi
         temperature = prefs.temperature,
     }
 
-    log:trace(Util.dumpTable(body))
+    if log then 
+        if not Util then Util = require 'Util' end
+        log:trace(Util.dumpTable(body))
+    end
 
     local response, headers = LrHttp.post(self.url, JSON:encode(body), {{ field = 'Content-Type', value = 'application/json' },  { field = 'Authorization', value = 'Bearer ' .. self.apiKey }})
 
@@ -76,6 +80,7 @@ function ChatGptAPI:doRequest(filePath, task, systemInstruction, generationConfi
                             return true, text, inputTokenCount, outputTokenCount
                         end
                     else
+                        if not Util then Util = require 'Util' end
                         log:error('Blocked: ' .. decoded.choices[1].finish_reason .. Util.dumpTable(decoded.choices[1]))
                         local inputTokenCount = decoded.usage.prompt_tokens
                         local outputTokenCount = decoded.usage.completion_tokens
@@ -87,6 +92,7 @@ function ChatGptAPI:doRequest(filePath, task, systemInstruction, generationConfi
         end
     else
         log:error('ChatGptAPI POST request failed. ' .. self.url)
+        if not Util then Util = require 'Util' end
         log:error(Util.dumpTable(headers))
         log:error(response)
         return false, 'ChatGptAPI POST request failed. ' .. self.url, 0, 0 
