@@ -14,16 +14,22 @@ AnalyzeImageProvider = {}
 
 
 function AnalyzeImageProvider.addKeywordRecursively(photo, keywordSubTable, parent)
+    log:trace("addKeywordRecursively called with parent: " .. (parent and parent:getName() or "nil"))
+    
     for key, value in pairs(keywordSubTable) do
+        log:trace("Processing key: " .. tostring(key) .. ", value type: " .. type(value))
+        
         local keyword
         if type(key) == 'string' and key ~= "" then
             photo.catalog:withWriteAccessDo("Create category keyword", function()
                 -- Some ollama models return "None" or "none" if a keyword category is empty.
                 if prefs.useKeywordHierarchy and key ~= "None" and key ~= "none" then
                     keyword = photo.catalog:createKeyword(key, {}, false, parent, true)
+                    log:trace("Created keyword: " .. key .. " under parent: " .. (parent and parent:getName() or "nil"))
                     -- Add the keyword to the photo if it's a leaf node (no children)
                     if type(value) ~= 'table' then
                         photo:addKeyword(keyword)
+                        log:trace("Added leaf keyword to photo: " .. key)
                     end
                 end
             end)
@@ -36,6 +42,7 @@ function AnalyzeImageProvider.addKeywordRecursively(photo, keywordSubTable, pare
                 if value ~= "None" and value ~= "none" then
                     keyword = photo.catalog:createKeyword(value, {}, true, parent, true)
                     photo:addKeyword(keyword)
+                    log:trace("Added numbered keyword to photo: " .. value)
                 end
             end)
         end
@@ -46,6 +53,7 @@ function AnalyzeImageProvider.addKeywordRecursively(photo, keywordSubTable, pare
             photo.catalog:withWriteAccessDo("Add leaf keyword", function()
                 local leafKeyword = photo.catalog:createKeyword(value, {}, true, keyword, true)
                 photo:addKeyword(leafKeyword)
+                log:trace("Added string leaf keyword to photo: " .. value .. " under " .. keyword:getName())
             end)
         end
     end

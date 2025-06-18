@@ -127,14 +127,21 @@ local function exportAndAnalyzePhoto(photo, progressScope)
                             table.insert(playerHierarchicalKeywords, playerKeywords)
                         end
                         
-                        -- Also add flat keywords for easier searching
+                        -- Also add flat keywords for easier searching (separate from regular keywords)
                         local playerName, cleanNumber = PlayerRoster.getPlayerName(jerseyNum)
                         if playerName and cleanNumber then
-                            -- Add individual flat keywords
-                            table.insert(keywords, playerName)
-                            table.insert(keywords, "#" .. cleanNumber)
-                            table.insert(keywords, "Fusion")
-                            table.insert(keywords, "2016BN5")
+                            -- Add individual flat keywords directly to photo (not under ChatGPT hierarchy)
+                            photo.catalog:withWriteAccessDo("Add flat player keywords", function()
+                                local playerNameKeyword = photo.catalog:createKeyword(playerName, {}, true, nil, true)
+                                local jerseyKeyword = photo.catalog:createKeyword("#" .. cleanNumber, {}, true, nil, true)
+                                local fusionKeyword = photo.catalog:createKeyword("Fusion", {}, true, nil, true)
+                                local ageGroupKeyword = photo.catalog:createKeyword("2016BN5", {}, true, nil, true)
+                                
+                                photo:addKeyword(playerNameKeyword)
+                                photo:addKeyword(jerseyKeyword)
+                                photo:addKeyword(fusionKeyword)
+                                photo:addKeyword(ageGroupKeyword)
+                            end)
                         end
                         
                         log:trace("Added hierarchical keywords for jersey #" .. jerseyNum)
@@ -235,11 +242,29 @@ local function exportAndAnalyzePhoto(photo, progressScope)
             end
             
             -- Add hierarchical player keywords (Fusion > 2016BN5 > Player > Jersey#)
-            if playerHierarchicalKeywords and #playerHierarchicalKeywords > 0 then
-                for _, playerKeyword in ipairs(playerHierarchicalKeywords) do
-                    AnalyzeImageProvider.addKeywordRecursively(photo, playerKeyword, nil)
-                end
-                log:trace("Added " .. #playerHierarchicalKeywords .. " hierarchical player keyword structures")
+            if jerseyNumbers and #jerseyNumbers > 0 then
+                photo.catalog:withWriteAccessDo("Create player hierarchy", function()
+                    -- Create Fusion root keyword
+                    local fusionKeyword = photo.catalog:createKeyword("Fusion", {}, false, nil, true)
+                    
+                    -- Create 2016BN5 under Fusion
+                    local ageGroupKeyword = photo.catalog:createKeyword("2016BN5", {}, false, fusionKeyword, true)
+                    
+                    -- For each detected jersey number, create player hierarchy
+                    for _, jerseyNum in ipairs(jerseyNumbers) do
+                        local playerName, cleanNumber = PlayerRoster.getPlayerName(jerseyNum)
+                        if playerName and cleanNumber then
+                            -- Create player name under age group
+                            local playerKeyword = photo.catalog:createKeyword(playerName, {}, false, ageGroupKeyword, true)
+                            
+                            -- Create jersey number under player name and add to photo
+                            local jerseyKeyword = photo.catalog:createKeyword("#" .. cleanNumber, {}, true, playerKeyword, true)
+                            photo:addKeyword(jerseyKeyword)
+                            
+                            log:trace("Created hierarchy: Fusion > 2016BN5 > " .. playerName .. " > #" .. cleanNumber)
+                        end
+                    end
+                end)
             end
 
             -- Delete temp file.
