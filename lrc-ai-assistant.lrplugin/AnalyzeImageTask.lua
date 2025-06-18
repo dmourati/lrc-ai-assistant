@@ -10,6 +10,10 @@ local LrFileUtils = import 'LrFileUtils'
 local LrDate = import 'LrDate'
 local LrDialogs = import 'LrDialogs'
 
+-- Required modules
+local AiModelAPI = require 'AiModelAPI'
+local Util = require 'Util'
+
 -- Module will be loaded when needed to avoid initialization issues
 local AnalyzeImageProvider
 
