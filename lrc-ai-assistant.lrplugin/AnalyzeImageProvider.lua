@@ -1,5 +1,14 @@
 require 'Defaults'
 
+-- Required imports
+local LrView = import 'LrView'
+local LrDialogs = import 'LrDialogs'
+local LrBinding = import 'LrBinding'
+local LrPathUtils = import 'LrPathUtils'
+local LrExportSession = import 'LrExportSession'
+local LrFileUtils = import 'LrFileUtils'
+local LOC = import 'LrLocalization'.LOC
+
 AnalyzeImageProvider = {}
 
 
@@ -586,3 +595,5 @@ function AnalyzeImageProvider.showPreflightDialog(ctx)
         return false
     end
 end
+
+return AnalyzeImageProvider
