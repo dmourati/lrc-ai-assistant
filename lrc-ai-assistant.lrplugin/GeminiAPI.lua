@@ -1,4 +1,7 @@
 require 'Defaults'
+local Util = require 'Util'
+local JSON = require 'JSON'
+local ResponseStructure = require 'ResponseStructure'
 
 GeminiAPI = {}
 
@@ -10,7 +13,7 @@ function GeminiAPI:new()
     self.rateLimitHit = 0
 
     if Util.nilOrEmpty(prefs.geminiApiKey) then
-        Util.handleError('Gemini API key not configured.', LOC("$$$/lrc-ai-assistant/GeminiAPI/NoAPIkey=No Gemini API key configured in add-ons manager.")
+        Util.handleError('Gemini API key not configured.', "No Gemini API key configured in add-ons manager.")
         return nil
     else
         self.apiKey = prefs.geminiApiKey
@@ -140,3 +143,5 @@ function GeminiAPI:analyzeImage(filePath, metadata)
     end
     return false, result, inputTokenCount, outputTokenCount
 end
+
+return GeminiAPI
