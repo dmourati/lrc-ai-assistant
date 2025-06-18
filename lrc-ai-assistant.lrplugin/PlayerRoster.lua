@@ -75,31 +75,22 @@ end
 -- Function to generate hierarchical keywords for jersey number and player
 -- Structure: Fusion > 2016BN5 > Player Name > Jersey Number
 function PlayerRoster.generateKeywords(jerseyNumber)
-    local keywords = {}
-    
     local playerName, cleanNumber = PlayerRoster.getPlayerName(jerseyNumber)
     
     if playerName and cleanNumber then
-        -- Create hierarchical keyword structure
+        -- Create hierarchical keyword structure that matches addKeywordRecursively format
         local hierarchicalKeyword = {
-            category = "Fusion",
-            keywords = {
-                {
-                    category = "2016BN5",
-                    keywords = {
-                        {
-                            category = playerName,
-                            keywords = {"#" .. cleanNumber}
-                        }
-                    }
+            ["Fusion"] = {
+                ["2016BN5"] = {
+                    [playerName] = {"#" .. cleanNumber}
                 }
             }
         }
         
-        table.insert(keywords, hierarchicalKeyword)
+        return hierarchicalKeyword
     end
     
-    return keywords
+    return {}
 end
 
 -- Function to update roster (for future configuration)

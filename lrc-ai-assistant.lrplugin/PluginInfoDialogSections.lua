@@ -5,6 +5,11 @@ local LrTasks = import 'LrTasks'
 local LrShell = import 'LrShell'
 local LrColor = import 'LrColor'
 
+-- Lazy load modules to avoid loading order issues
+local PromptConfigProvider
+local KeywordConfigProvider
+local Util
+
 -- Debug test removed for schema loading
 
 PluginInfoDialogSections = {}
@@ -82,7 +87,10 @@ function PluginInfoDialogSections.sectionsForBottomOfDialog(f, propertyTable)
 
             f:row {
                 f:static_text {
-                    title = Util.getLogfilePath(),
+                    title = (function()
+                        if not Util then Util = require 'Util' end
+                        return Util.getLogfilePath()
+                    end)(),
                 },
             },
             f:row {
@@ -97,6 +105,7 @@ function PluginInfoDialogSections.sectionsForBottomOfDialog(f, propertyTable)
                 f:push_button {
                     title = "Show logfile",
                     action = function (button)
+                        if not Util then Util = require 'Util' end
                         LrShell.revealInShell(Util.getLogfilePath())
                     end,
                 },
@@ -234,12 +243,14 @@ function PluginInfoDialogSections.sectionsForTopOfDialog(f, propertyTable)
                     f:push_button {
                         title = "Add",
                         action = function(button)
+                            if not PromptConfigProvider then PromptConfigProvider = require 'PromptConfigProvider' end
                             local newName = PromptConfigProvider.addPrompt(propertyTable)
                         end,
                     },
                     f:push_button {
                         title = "Delete",
                         action = function(button)
+                            if not PromptConfigProvider then PromptConfigProvider = require 'PromptConfigProvider' end
                             PromptConfigProvider.deletePrompt(propertyTable)
                         end,
                     },
@@ -409,6 +420,7 @@ function PluginInfoDialogSections.sectionsForTopOfDialog(f, propertyTable)
                         enabled = bind 'useKeywordHierarchy',
                         title = "Edit keyword categories",
                         action = function (button)
+                            if not KeywordConfigProvider then KeywordConfigProvider = require 'KeywordConfigProvider' end
                             KeywordConfigProvider.showKeywordCategoryDialog()
                         end,
                     },

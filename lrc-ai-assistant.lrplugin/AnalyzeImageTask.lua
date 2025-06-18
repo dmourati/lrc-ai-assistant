@@ -13,7 +13,7 @@ local LrDialogs = import 'LrDialogs'
 -- Required modules
 local AiModelAPI = require 'AiModelAPI'
 local Util = require 'Util'
--- local PlayerRoster = require 'PlayerRoster' -- Temporarily disabled for debugging
+local PlayerRoster = require 'PlayerRoster'
 
 -- Module will be loaded when needed to avoid initialization issues
 local AnalyzeImageProvider
@@ -115,8 +115,6 @@ local function exportAndAnalyzePhoto(photo, progressScope)
                 
                 -- Process jersey numbers and generate hierarchical player keywords
                 local playerHierarchicalKeywords = {}
-                -- Temporarily disabled for debugging
-                --[[
                 if jerseyNumbers and #jerseyNumbers > 0 then
                     log:trace("Found jersey numbers: " .. table.concat(jerseyNumbers, ", "))
                     
@@ -158,7 +156,6 @@ local function exportAndAnalyzePhoto(photo, progressScope)
                         end
                     end
                 end
-                --]]
                 
                 log:trace("Final keywords: " .. (keywords and table.concat(keywords, ", ") or "none"))
             end
@@ -228,15 +225,12 @@ local function exportAndAnalyzePhoto(photo, progressScope)
             end
             
             -- Add hierarchical player keywords (Fusion > 2016BN5 > Player > Jersey#)
-            -- Temporarily disabled for debugging
-            --[[
             if playerHierarchicalKeywords and #playerHierarchicalKeywords > 0 then
                 for _, playerKeyword in ipairs(playerHierarchicalKeywords) do
                     AnalyzeImageProvider.addKeywordRecursively(photo, playerKeyword, nil)
                 end
                 log:trace("Added " .. #playerHierarchicalKeywords .. " hierarchical player keyword structures")
             end
-            --]]
 
             -- Delete temp file.
             LrFileUtils.delete(path)

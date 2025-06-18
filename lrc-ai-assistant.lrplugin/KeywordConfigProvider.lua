@@ -76,3 +76,5 @@ function KeywordConfigProvider.showKeywordCategoryDialog()
         end
     end
 end
+
+return KeywordConfigProvider
