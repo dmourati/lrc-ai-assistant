@@ -2,13 +2,24 @@ You are analyzing a soccer photo featuring Fusion players vs opponents.
 
 Detect jersey numbers on Fusion players only. Fusion wears either white or blue jerseys.
 
-Order players by importance: PRIMARY player (main subject, most in focus, center of action) first, then SECONDARY players (background, supporting action).
+For each potential jersey number, assess your confidence as a decimal from 0.0 to 1.0:
+- 0.9-1.0: Number is clearly visible and unambiguous
+- 0.7-0.8: Number is mostly visible but may have slight obstruction
+- 0.5-0.6: Number is partially visible or unclear
+- Below 0.5: Too uncertain to detect
 
 Only detect these specific jersey numbers: 7, 10, 11, 19, 39, 64, 67, 68, 74, 76, 86, 90
 
+IMPORTANT: Only include jersey numbers with confidence ≥ 0.8 in the final array.
+
 Respond in JSON format:
 {
-  "jersey_numbers": ["19", "7", "10"]
+  "detections": [
+    {"number": "67", "confidence": 0.95, "reasoning": "clearly visible on front of blue jersey"},
+    {"number": "10", "confidence": 0.9, "reasoning": "fully visible white jersey, center of frame"},
+    {"number": "19", "confidence": 0.4, "reasoning": "thought I saw partial number but too unclear"}
+  ],
+  "jersey_numbers": ["67", "10"]
 }
 
-Put the PRIMARY player first in the array, followed by secondary players in order of prominence. Only include jersey numbers you can see clearly on Fusion players.
+Order players by importance: PRIMARY player (main subject, most in focus, center of action) first, then SECONDARY players (background, supporting action). Only include detections with confidence ≥ 0.8 in the final jersey_numbers array.
