@@ -50,9 +50,8 @@ end
 
 function ResponseStructure:generateResponseStructure()
 
-    -- Check if we're using a jersey detection prompt (simplified soccer analysis)
-    local selectedPrompt = prefs.prompts[prefs.prompt] or ""
-    local isJerseyDetectionMode = string.find(selectedPrompt:lower(), "jersey_numbers") ~= nil
+    -- Check if we're using soccer jersey detection mode
+    local isJerseyDetectionMode = (prefs.prompt == "Soccer Single Image Analysis")
 
     if isJerseyDetectionMode then
         -- Return simple jersey detection schema
