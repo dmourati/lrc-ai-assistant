@@ -1,12 +1,19 @@
 require 'Defaults'
-local Util = require 'Util'
 local JSON = require 'JSON'
 local ResponseStructure = require 'ResponseStructure'
 
 ChatGptAPI = {}
+
+-- Lazy load Util to avoid loading order issues
+local Util
 ChatGptAPI.__index = ChatGptAPI
 
 function ChatGptAPI:new()
+    -- Lazy load Util when first needed
+    if not Util then
+        Util = require 'Util'
+    end
+    
     local o = setmetatable({}, ChatGptAPI)
 
     if Util.nilOrEmpty(prefs.chatgptApiKey) then

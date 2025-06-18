@@ -1,14 +1,21 @@
 require 'Defaults'
-local Util = require 'Util'
 local JSON = require 'JSON'
 local ResponseStructure = require 'ResponseStructure'
 
 GeminiAPI = {}
 
+-- Lazy load Util to avoid loading order issues
+local Util
+
 
 GeminiAPI.__index = GeminiAPI
 
 function GeminiAPI:new()
+    -- Lazy load Util when first needed
+    if not Util then
+        Util = require 'Util'
+    end
+    
     local o = setmetatable({}, GeminiAPI)
     self.rateLimitHit = 0
 
