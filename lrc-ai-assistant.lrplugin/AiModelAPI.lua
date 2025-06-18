@@ -1,5 +1,9 @@
 
 require 'Defaults'
+local GeminiAPI = require 'GeminiAPI'
+local ChatGptAPI = require 'ChatGptAPI'
+local OllamaAPI = require 'OllamaAPI'
+local LmStudioAPI = require 'LmStudioAPI'
 
 AiModelAPI = {}
 AiModelAPI.__index = AiModelAPI
@@ -79,3 +83,5 @@ function AiModelAPI.generatePromptFromConfiguration()
 
     return result
 end
+
+return AiModelAPI
