@@ -10,11 +10,11 @@ local LrFileUtils = import 'LrFileUtils'
 local LrDate = import 'LrDate'
 local LrDialogs = import 'LrDialogs'
 
--- Required modules
-local AnalyzeImageProvider = require 'AnalyzeImageProvider'
-
 -- Localization
 local LOC = import 'LrLocalization'.LOC
+
+-- Module will be loaded when needed to avoid initialization issues
+local AnalyzeImageProvider
 
 SkipReviewCaptions = false
 SkipReviewTitles = false
@@ -212,6 +212,11 @@ end
 
 LrTasks.startAsyncTask(function()
     LrFunctionContext.callWithContext("AnalyzeImageTask", function(context)
+        -- Lazy load the module when the task starts
+        if not AnalyzeImageProvider then
+            AnalyzeImageProvider = require 'AnalyzeImageProvider'
+        end
+        
         local startTimeBatch = LrDate.currentTime()
 
         local catalog = LrApplication.activeCatalog()
