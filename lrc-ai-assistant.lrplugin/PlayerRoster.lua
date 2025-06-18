@@ -3,14 +3,20 @@
 
 PlayerRoster = {}
 
--- Default roster - can be customized per team/season
+-- Team roster - jersey numbers to player names
 PlayerRoster.defaultRoster = {
+    ["7"] = "Luca Nasrabadi",
+    ["10"] = "Austin Ivancic",
+    ["11"] = "Luke Cheng",
+    ["19"] = "Yianni Mouratis",
+    ["39"] = "Dean Huddy",
+    ["64"] = "Luke Forster",
+    ["67"] = "Ismail Elghazi",
+    ["68"] = "Victor Smith",
+    ["74"] = "Cullen Evanson",
+    ["76"] = "Mason Roach",
     ["86"] = "Zachary Kerr",
-    ["10"] = "Team Captain",
-    ["7"] = "Midfielder",
-    ["9"] = "Striker",
-    ["1"] = "Goalkeeper",
-    -- Add more players as needed
+    ["90"] = "Stefen Edelstein",
 }
 
 -- Function to get player name from jersey number
