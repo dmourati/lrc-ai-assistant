@@ -67,7 +67,8 @@ function ResponseStructure:generateResponseStructure()
                             confidence = { type = "number" },
                             reasoning = { type = self.strString }
                         },
-                        required = {"number", "confidence", "reasoning"}
+                        required = {"number", "confidence", "reasoning"},
+                        additionalProperties = false
                     }
                 },
                 jersey_numbers = {
