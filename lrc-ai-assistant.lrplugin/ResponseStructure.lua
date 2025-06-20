@@ -54,10 +54,22 @@ function ResponseStructure:generateResponseStructure()
     local isJerseyDetectionMode = (prefs.prompt == "Soccer Single Image Analysis")
 
     if isJerseyDetectionMode then
-        -- Return simple jersey detection schema
+        -- Return jersey detection schema with confidence scores
         local result = {
             type = self.strObject,
             properties = {
+                detections = {
+                    type = "array",
+                    items = {
+                        type = self.strObject,
+                        properties = {
+                            number = { type = self.strString },
+                            confidence = { type = "number" },
+                            reasoning = { type = self.strString }
+                        },
+                        required = {"number", "confidence", "reasoning"}
+                    }
+                },
                 jersey_numbers = {
                     type = "array",
                     items = {
