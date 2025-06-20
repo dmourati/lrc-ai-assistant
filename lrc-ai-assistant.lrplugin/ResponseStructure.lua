@@ -78,7 +78,7 @@ function ResponseStructure:generateResponseStructure()
                     }
                 }
             },
-            required = {"jersey_numbers"}
+            required = {"detections", "jersey_numbers"}
         }
         
         if self.ai == 'chatgpt' then
