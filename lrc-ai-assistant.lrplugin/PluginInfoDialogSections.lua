@@ -43,6 +43,8 @@ function PluginInfoDialogSections.startDialog(propertyTable)
 
     propertyTable.submitGPS = prefs.submitGPS
     propertyTable.submitKeywords = prefs.submitKeywords
+    
+    propertyTable.forceReprocess = prefs.forceReprocess
 
     propertyTable.task = prefs.task
     propertyTable.systemInstruction = prefs.systemInstruction
@@ -376,6 +378,19 @@ function PluginInfoDialogSections.sectionsForTopOfDialog(f, propertyTable)
                     },
                 },
                 f:row {
+                    f:static_text {
+                        title = "Processing options:",
+                        width = share 'labelWidth',
+                    },
+                    f:checkbox {
+                        value = bind 'forceReprocess',
+                        width = share 'checkboxWidth',
+                    },
+                    f:static_text {
+                        title = "Force reprocess already analyzed images",
+                    },
+                },
+                f:row {
                     f:spacer {
                         width = share 'labelWidth',
                     },
@@ -509,6 +524,8 @@ function PluginInfoDialogSections.endDialog(propertyTable)
 
     prefs.submitGPS = propertyTable.submitGPS
     prefs.submitKeywords = propertyTable.submitKeywords
+    
+    prefs.forceReprocess = propertyTable.forceReprocess
 
     prefs.task = propertyTable.task
     prefs.systemInstruction = propertyTable.systemInstruction

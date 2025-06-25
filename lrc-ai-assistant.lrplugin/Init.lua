@@ -110,6 +110,11 @@ if _G.prefs.enableBatchProcessing == nil then
     _G.prefs.enableBatchProcessing = true
 end
 
+-- Processing control preferences
+if _G.prefs.forceReprocess == nil then
+    _G.prefs.forceReprocess = false
+end
+
 -- JSON error handler - will be set up when JSON module is loaded
 _G.setupJSONErrorHandler = function()
     if _G.JSON then

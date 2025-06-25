@@ -31,6 +31,15 @@ local function exportAndAnalyzePhoto(photo, progressScope)
     local tempDir = LrPathUtils.getStandardFilePath('temp')
     local photoName = LrPathUtils.leafName(photo:getFormattedMetadata('fileName'))
     local catalog = LrApplication.activeCatalog()
+    
+    -- Check if image was already processed by the same AI model
+    local previousAiModel = photo:getPropertyForPlugin(_PLUGIN, 'aiModel')
+    local lastRunTime = photo:getPropertyForPlugin(_PLUGIN, 'aiLastRun')
+    
+    if previousAiModel == prefs.ai and lastRunTime ~= nil and not prefs.forceReprocess then
+        log:trace('[SKIP] Image ' .. photoName .. ' already processed by ' .. prefs.ai .. ' at ' .. lastRunTime)
+        return true, 0, 0, "skipped", "Already processed by " .. prefs.ai
+    end
 
     local exportSettings = {
         LR_export_destinationType = 'specificFolder',
