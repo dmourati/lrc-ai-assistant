@@ -99,6 +99,7 @@ local function exportAndAnalyzePhoto(photo, progressScope)
 
             if not analyzeSuccess then -- AI API request failed.
                 if result == 'RATE_LIMIT_EXHAUSTED' then
+                    log:warn('[RATE_LIMIT] Skipped image ' .. photoName .. ' due to rate limiting')
                     LrDialogs.showError("Quota exhausted, set up pay as you go at Google, or wait for some hours.")
                     return false, inputTokens, outputTokens, "fatal", result
                 end

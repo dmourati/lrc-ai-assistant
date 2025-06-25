@@ -29,6 +29,37 @@ function ChatGptAPI:new()
     return o
 end
 
+function ChatGptAPI:doRequestWithRetry(filePath, task, systemInstruction, generationConfig, maxRetries)
+    maxRetries = maxRetries or 3
+    
+    for attempt = 1, maxRetries do
+        local success, result, inputTokens, outputTokens = self:doRequest(filePath, task, systemInstruction, generationConfig)
+        
+        if success then
+            return success, result, inputTokens, outputTokens
+        elseif result == 'RATE_LIMIT_EXCEEDED' then
+            if attempt < maxRetries then
+                local waitTime = math.min(2 ^ attempt, 60) -- Exponential backoff, max 60 seconds
+                log:warn('[RETRY] Rate limited, waiting ' .. waitTime .. ' seconds before retry ' .. attempt .. '/' .. maxRetries)
+                
+                -- Simple sleep implementation for Lua
+                local startTime = os.time()
+                while os.time() - startTime < waitTime do
+                    -- Busy wait (not ideal but works in Lightroom context)
+                end
+            else
+                log:warn('[RETRY] Max retries reached, giving up on this request')
+                return false, result, inputTokens, outputTokens
+            end
+        else
+            -- Non-rate-limit error, don't retry
+            return false, result, inputTokens, outputTokens
+        end
+    end
+    
+    return false, 'RETRY_EXHAUSTED', 0, 0
+end
+
 function ChatGptAPI:doRequest(filePath, task, systemInstruction, generationConfig)
     local body = {
         model = self.model,
@@ -91,6 +122,20 @@ function ChatGptAPI:doRequest(filePath, task, systemInstruction, generationConfi
         else
             log:error('Got empty response from ChatGPT')
         end
+    elseif headers.status == 429 then
+        -- Rate limit handling
+        local retryAfter = headers['retry-after'] or headers['retry-after-ms'] or "unknown"
+        local decoded = JSON:decode(response)
+        local errorMessage = "Rate limit exceeded"
+        
+        if decoded and decoded.error and decoded.error.message then
+            errorMessage = decoded.error.message
+        end
+        
+        log:warn('[RATE_LIMIT] Skipping image analysis due to rate limit (Status: 429, Retry-After: ' .. retryAfter .. ')')
+        log:warn('[RATE_LIMIT] Error: ' .. errorMessage)
+        
+        return false, 'RATE_LIMIT_EXCEEDED', 0, 0
     else
         log:error('ChatGptAPI POST request failed. ' .. self.url)
         if not Util then Util = require 'Util' end
@@ -120,11 +165,12 @@ function ChatGptAPI:analyzeImage(filePath, metadata)
 
     local systemInstruction = AiModelAPI.addKeywordHierarchyToSystemInstruction()
 
-    local success, result, inputTokenCount, outputTokenCount = self:doRequest(filePath, task, systemInstruction, ResponseStructure:new():generateResponseStructure())
+    -- Use retry wrapper for better rate limit handling
+    local success, result, inputTokenCount, outputTokenCount = self:doRequestWithRetry(filePath, task, systemInstruction, ResponseStructure:new():generateResponseStructure(), 3)
     if success then
         return success, JSON:decode(result), inputTokenCount, outputTokenCount
     end
-    return false, "", inputTokenCount, outputTokenCount
+    return false, result, inputTokenCount, outputTokenCount
 end
 
 return ChatGptAPI
