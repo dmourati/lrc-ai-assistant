@@ -1,7 +1,9 @@
 require 'Defaults'
 local LrHttp = import 'LrHttp'
+local LrTasks = import 'LrTasks'
 local JSON = require 'JSON'
 local ResponseStructure = require 'ResponseStructure'
+local RateLimitManager = require 'RateLimitManager'
 
 ChatGptAPI = {}
 
@@ -32,35 +34,31 @@ end
 function ChatGptAPI:doRequestWithRetry(filePath, task, systemInstruction, generationConfig, maxRetries)
     maxRetries = maxRetries or 3
     
+    -- Pre-check rate limits before making request
+    local estimatedTokens = RateLimitManager:estimateTokens(systemInstruction .. task, filePath)
+    local canProceed, waitTime = RateLimitManager:canMakeRequest(estimatedTokens)
+    
+    if not canProceed then
+        log:warn('[RATE_LIMIT] Pre-emptively waiting ' .. waitTime .. ' seconds to avoid rate limit')
+        LrTasks.sleep(waitTime)
+    end
+    
     for attempt = 1, maxRetries do
         local success, result, inputTokens, outputTokens = self:doRequest(filePath, task, systemInstruction, generationConfig)
         
         if success then
+            -- Record successful request tokens for tracking
+            RateLimitManager:recordRequest(inputTokens + outputTokens)
             return success, result, inputTokens, outputTokens
         elseif string.find(result or '', 'Rate limit') then
             if attempt < maxRetries then
-                -- Try to extract wait time from error message
-                local suggestedWaitMs = string.match(result, "Please try again in (%d+)ms")
-                local baseWaitTime = math.min(2 ^ attempt, 60) -- Exponential backoff, max 60 seconds
-                local waitTime = baseWaitTime
-                
-                if suggestedWaitMs then
-                    -- Use API's suggested wait time if available, but not less than our backoff
-                    waitTime = math.max(tonumber(suggestedWaitMs) / 1000 + 0.5, baseWaitTime)
-                end
+                -- Use RateLimitManager to handle rate limit error and get proper wait time
+                local apiWaitTime = RateLimitManager:handleRateLimitError(result)
+                local exponentialBackoff = math.min(2 ^ attempt, 60)
+                local waitTime = math.max(apiWaitTime, exponentialBackoff)
                 
                 log:warn('[RETRY] Rate limited, waiting ' .. waitTime .. ' seconds before retry ' .. attempt .. '/' .. maxRetries)
-                
-                -- Use LrTasks.sleep if available
-                if LrTasks and LrTasks.sleep then
-                    LrTasks.sleep(waitTime)
-                else
-                    -- Fallback to busy wait
-                    local startTime = os.time()
-                    while os.time() - startTime < waitTime do
-                        -- Busy wait
-                    end
-                end
+                LrTasks.sleep(waitTime)
             else
                 log:warn('[RETRY] Max retries reached, giving up on this request')
                 return false, result, inputTokens, outputTokens
@@ -122,6 +120,8 @@ function ChatGptAPI:doRequest(filePath, task, systemInstruction, generationConfi
                             local text = decoded.choices[1].message.content
                             local inputTokenCount = decoded.usage.prompt_tokens
                             local outputTokenCount = decoded.usage.completion_tokens
+                            local totalTokens = inputTokenCount + outputTokenCount
+                            log:trace('[TOKEN_USAGE] Input: ' .. inputTokenCount .. ', Output: ' .. outputTokenCount .. ', Total: ' .. totalTokens)
                             log:trace(text)
                             return true, text, inputTokenCount, outputTokenCount
                         end

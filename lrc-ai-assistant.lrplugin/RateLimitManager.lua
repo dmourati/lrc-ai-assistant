@@ -77,10 +77,19 @@ function RateLimitManager:handleRateLimitError(errorMessage)
     return self.requestTracking.minDelayBetweenRequests * self.requestTracking.backoffMultiplier
 end
 
-function RateLimitManager:estimateTokens(prompt, imageBase64)
-    -- Rough estimation: ~750 tokens for prompt, ~500 for small image
-    local promptTokens = math.ceil(#prompt / 4)  -- ~4 chars per token
-    local imageTokens = imageBase64 and 500 or 0  -- Fixed estimate for images
+function RateLimitManager:estimateTokens(prompt, imagePath)
+    -- More accurate token estimation for gpt-4o-mini
+    -- Text: ~1 token per 4 characters (conservative estimate)
+    local promptTokens = math.ceil(#prompt / 3)  -- Conservative: ~3 chars per token
+    
+    -- Image tokens depend on resolution
+    -- For 1024px images at 50% quality: ~1000-1500 tokens
+    local imageTokens = 0
+    if imagePath then
+        -- Conservative estimate for vision models
+        imageTokens = 1500  -- Assume worst case for safety
+    end
+    
     return promptTokens + imageTokens
 end
 
