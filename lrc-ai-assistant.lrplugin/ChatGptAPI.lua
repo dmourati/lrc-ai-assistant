@@ -37,15 +37,29 @@ function ChatGptAPI:doRequestWithRetry(filePath, task, systemInstruction, genera
         
         if success then
             return success, result, inputTokens, outputTokens
-        elseif result == 'RATE_LIMIT_EXCEEDED' then
+        elseif string.find(result or '', 'Rate limit') then
             if attempt < maxRetries then
-                local waitTime = math.min(2 ^ attempt, 60) -- Exponential backoff, max 60 seconds
+                -- Try to extract wait time from error message
+                local suggestedWaitMs = string.match(result, "Please try again in (%d+)ms")
+                local baseWaitTime = math.min(2 ^ attempt, 60) -- Exponential backoff, max 60 seconds
+                local waitTime = baseWaitTime
+                
+                if suggestedWaitMs then
+                    -- Use API's suggested wait time if available, but not less than our backoff
+                    waitTime = math.max(tonumber(suggestedWaitMs) / 1000 + 0.5, baseWaitTime)
+                end
+                
                 log:warn('[RETRY] Rate limited, waiting ' .. waitTime .. ' seconds before retry ' .. attempt .. '/' .. maxRetries)
                 
-                -- Simple sleep implementation for Lua
-                local startTime = os.time()
-                while os.time() - startTime < waitTime do
-                    -- Busy wait (not ideal but works in Lightroom context)
+                -- Use LrTasks.sleep if available
+                if LrTasks and LrTasks.sleep then
+                    LrTasks.sleep(waitTime)
+                else
+                    -- Fallback to busy wait
+                    local startTime = os.time()
+                    while os.time() - startTime < waitTime do
+                        -- Busy wait
+                    end
                 end
             else
                 log:warn('[RETRY] Max retries reached, giving up on this request')
@@ -135,7 +149,8 @@ function ChatGptAPI:doRequest(filePath, task, systemInstruction, generationConfi
         log:warn('[RATE_LIMIT] Skipping image analysis due to rate limit (Status: 429, Retry-After: ' .. retryAfter .. ')')
         log:warn('[RATE_LIMIT] Error: ' .. errorMessage)
         
-        return false, 'RATE_LIMIT_EXCEEDED', 0, 0
+        -- Store the error message for retry logic to extract wait time
+        return false, errorMessage, 0, 0
     else
         log:error('ChatGptAPI POST request failed. ' .. self.url)
         if not Util then Util = require 'Util' end

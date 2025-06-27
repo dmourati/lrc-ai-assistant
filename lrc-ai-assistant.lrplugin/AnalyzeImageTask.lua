@@ -100,9 +100,21 @@ local function exportAndAnalyzePhoto(photo, progressScope)
                 )
             end
 
+            -- Add delay between requests to avoid rate limits
+            if AnalyzeImageTask.lastRequestTime then
+                local timeSinceLastRequest = LrDate.currentTime() - AnalyzeImageTask.lastRequestTime
+                if timeSinceLastRequest < 1 then
+                    -- Ensure at least 1 second between requests
+                    LrTasks.sleep(1 - timeSinceLastRequest)
+                end
+            end
+            
             local startTimeAnalyze = LrDate.currentTime()
             local analyzeSuccess, result, inputTokens, outputTokens = ai:analyzeImage(path, metadata)
             local stopTimeAnalyze = LrDate.currentTime()
+            
+            -- Record time of this request
+            AnalyzeImageTask.lastRequestTime = LrDate.currentTime()
 
             log:trace("Analyzing " .. photoName .. " with " .. prefs.ai .. " took " .. (stopTimeAnalyze - startTimeAnalyze) .. " seconds.")
 
