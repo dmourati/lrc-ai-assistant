@@ -361,6 +361,7 @@ function AnalyzeImageProvider.showPreflightDialog(ctx)
 
     propertyTable.submitGPS = prefs.submitGPS
     propertyTable.submitKeywords = prefs.submitKeywords
+    propertyTable.forceReprocess = prefs.forceReprocess
 
     propertyTable.temperature = prefs.temperature
 
@@ -574,6 +575,21 @@ function AnalyzeImageProvider.showPreflightDialog(ctx)
                 width = share 'labelWidth',
             },
         },
+        f:row {
+            f:static_text {
+                title = "Processing:",
+                width = share 'labelWidth',
+                alignment = "right",
+            },
+            f:checkbox {
+                value = bind 'forceReprocess',
+                width = share 'checkboxWidth'
+            },
+            f:static_text {
+                title = "Force reprocess already analyzed images",
+                width = share 'labelWidth',
+            },
+        },
     }
 
     local result = LrDialogs.presentModalDialog({
@@ -601,6 +617,7 @@ function AnalyzeImageProvider.showPreflightDialog(ctx)
 
         prefs.submitGPS = propertyTable.submitGPS
         prefs.submitKeywords = propertyTable.submitKeywords
+        prefs.forceReprocess = propertyTable.forceReprocess
 
         prefs.temperature = propertyTable.temperature
 

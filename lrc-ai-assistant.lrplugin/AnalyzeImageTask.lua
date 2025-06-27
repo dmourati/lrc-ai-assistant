@@ -165,7 +165,22 @@ local function exportAndAnalyzePhoto(photo, progressScope)
                             table.insert(playerHierarchicalKeywords, playerKeywords)
                         end
                         
-                        -- Flat keywords removed - using only hierarchical keywords
+                        -- Also add flat keywords for easier searching (separate from regular keywords)
+                        local playerName, cleanNumber = PlayerRoster.getPlayerName(jerseyNum)
+                        if playerName and cleanNumber then
+                            -- Add individual flat keywords directly to photo (not under ChatGPT hierarchy)
+                            catalog:withWriteAccessDo("Add flat player keywords", function()
+                                local playerNameKeyword = catalog:createKeyword(playerName, {}, true, nil, true)
+                                local jerseyKeyword = catalog:createKeyword("#" .. cleanNumber, {}, true, nil, true)
+                                local fusionKeyword = catalog:createKeyword("Fusion", {}, true, nil, true)
+                                local ageGroupKeyword = catalog:createKeyword("2016BN5", {}, true, nil, true)
+                                
+                                photo:addKeyword(playerNameKeyword)
+                                photo:addKeyword(jerseyKeyword)
+                                photo:addKeyword(fusionKeyword)
+                                photo:addKeyword(ageGroupKeyword)
+                            end)
+                        end
                         
                         log:trace("Added hierarchical keywords for jersey #" .. jerseyNum)
                     end
