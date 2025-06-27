@@ -1,4 +1,5 @@
-local log = require 'Logger'
+-- Use global log variable (initialized in Init.lua)
+local log = _G.log
 
 local RateLimitManager = {}
 
