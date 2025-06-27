@@ -27,7 +27,7 @@ return {
         },
     },
 
-    schemaVersion = 1,
+    schemaVersion = 2,
     --updateFromEarlierSchemaVersion = function (catalog, previousSchemaVersion, progressScope)
             -- When the plug-in is first installed, previousSchemaVersion is nil.
             -- As of Lightroom version 3.0, a progress-scope variable is available; you can
