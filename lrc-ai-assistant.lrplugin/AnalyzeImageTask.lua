@@ -45,16 +45,30 @@ local function exportAndAnalyzePhoto(photo, progressScope)
         return true, 0, 0, "skipped", "Already processed by " .. prefs.ai
     end
 
+    -- Override export settings for soccer jersey detection to reduce token usage
+    local exportSize = prefs.exportSize
+    local exportQuality = prefs.exportQuality
+    
+    log:trace('DEBUG: Current prompt is: "' .. (prefs.prompt or "nil") .. '"')
+    
+    if prefs.prompt == "Soccer Single Image Analysis" then
+        exportSize = "768"  -- Lower resolution for jersey detection
+        exportQuality = 35   -- Lower quality still works for number detection
+        log:trace('Overriding export settings for soccer: ' .. exportSize .. "px @ " .. exportQuality .. "% (saves tokens)")
+    end
+    
+    log:trace('Export settings are: ' .. exportSize .. "px (long edge) and " .. exportQuality .. "% JPEG quality")
+
     local exportSettings = {
         LR_export_destinationType = 'specificFolder',
         LR_export_destinationPathPrefix = tempDir,
         LR_export_useSubfolder = false,
         LR_format = 'JPEG',
-        LR_jpeg_quality = tonumber(prefs.exportQuality) / 100,
+        LR_jpeg_quality = tonumber(exportQuality) / 100,
         LR_minimizeEmbeddedMetadata = false,
         LR_outputSharpeningOn = false,
         LR_size_doConstrain = true,
-        LR_size_maxHeight = tonumber(prefs.exportSize),
+        LR_size_maxHeight = tonumber(exportSize),
         LR_size_resizeType = 'longEdge',
         LR_size_units = 'pixels',
         LR_collisionHandling = 'rename',
@@ -62,8 +76,6 @@ local function exportAndAnalyzePhoto(photo, progressScope)
         LR_removeLocationMetadata = false,
         LR_embeddedMetadataOption = "all",
     }
-
-    log:trace('Export settings are: ' .. prefs.exportSize .. "px (long edge) and " .. prefs.exportQuality .. "% JPEG quality")
 
     local exportSession = LrExportSession({
         photosToExport = { photo },

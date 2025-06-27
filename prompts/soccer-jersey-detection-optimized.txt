@@ -1,0 +1,16 @@
+Detect jersey numbers on Fusion players (white/blue jerseys) in sharp focus only.
+
+Valid numbers: 7, 10, 11, 19, 39, 64, 67, 68, 74, 76, 86, 90
+
+Requirements:
+- Number clearly visible and in focus
+- Confidence ≥ 0.8
+- Ignore blurry/background players
+
+JSON response:
+{
+  "detections": [
+    {"number": "19", "confidence": 0.9, "reasoning": "clear on white jersey, sharp focus"}
+  ],
+  "jersey_numbers": ["19"]
+}

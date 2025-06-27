@@ -18,6 +18,13 @@ function AiModelAPI:new()
     if prefs.prompt == "Soccer Single Image Analysis" then
         effectiveModel = "gpt-4o-mini"
         log:trace("Overriding model to gpt-4o-mini for soccer jersey detection")
+        
+        -- Also override export settings to reduce token usage
+        if prefs.exportSize ~= "768" then
+            log:trace("Overriding export size from " .. prefs.exportSize .. " to 768 for soccer (saves tokens)")
+            prefs.exportSize = "768"
+            prefs.exportQuality = 35
+        end
     end
 
     -- Store original model and temporarily override prefs.ai if needed
