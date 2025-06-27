@@ -36,6 +36,22 @@ local function exportAndAnalyzePhoto(photo, progressScope)
     local photoName = LrPathUtils.leafName(photo:getFormattedMetadata('fileName'))
     local catalog = LrApplication.activeCatalog()
     
+    -- Clear all keywords if requested
+    if prefs.clearAllKeywords then
+        log:trace("Clearing all keywords from photo before processing")
+        catalog:withWriteAccessDo("Clear all keywords", function()
+            local keywords = photo:getRawMetadata("keywords")
+            if keywords then
+                for _, keyword in ipairs(keywords) do
+                    photo:removeKeyword(keyword)
+                end
+                log:trace("Removed " .. #keywords .. " keywords from photo")
+            else
+                log:trace("No keywords found to remove")
+            end
+        end)
+    end
+    
     -- Check if image was already processed by the same AI model
     local previousAiModel = photo:getPropertyForPlugin(_PLUGIN, 'aiModel')
     local lastRunTime = photo:getPropertyForPlugin(_PLUGIN, 'aiLastRun')
@@ -151,12 +167,64 @@ local function exportAndAnalyzePhoto(photo, progressScope)
                 altText = result["Image Alt Text"]
                 jerseyNumbers = result["jersey_numbers"] or {}
                 
-                -- Process jersey numbers and generate hierarchical player keywords
+                -- Process jersey numbers with face validation and generate hierarchical player keywords
                 local playerHierarchicalKeywords = {}
-                if jerseyNumbers and #jerseyNumbers > 0 then
-                    log:trace("Found jersey numbers: " .. table.concat(jerseyNumbers, ", "))
+                local validJerseyNumbers = {}
+                
+                -- First, validate detections if available (new format)
+                local detections = result["detections"] or {}
+                if detections and #detections > 0 then
+                    log:trace("Found " .. #detections .. " player detections")
                     
-                    for _, jerseyNum in ipairs(jerseyNumbers) do
+                    for _, detection in ipairs(detections) do
+                        -- Handle both old format (jersey_number) and soccer format (number)
+                        local jerseyNum = detection.jersey_number or detection.number
+                        local faceVisible = detection.face_visible
+                        local faceInFocus = detection.face_in_focus  
+                        local jerseyInFocus = detection.jersey_in_focus
+                        local confidence = detection.confidence or 0
+                        local reasoning = detection.reasoning or "No reasoning provided"
+                        
+                        -- Validate jersey number exists
+                        if not jerseyNum or jerseyNum == "" then
+                            log:trace("✗ Detection skipped - missing jersey number")
+                        else
+                            log:trace("Detection: Jersey #" .. tostring(jerseyNum) .. 
+                                     ", Face visible: " .. tostring(faceVisible) .. 
+                                     ", Face in focus: " .. tostring(faceInFocus) .. 
+                                     ", Jersey in focus: " .. tostring(jerseyInFocus) .. 
+                                     ", Confidence: " .. confidence)
+                            
+                            -- Check user preference for face detection requirement
+                            if prefs.requireFaceDetection and faceVisible ~= nil and faceInFocus ~= nil and jerseyInFocus ~= nil then
+                                -- Face detection mode - require ALL criteria
+                                if faceVisible and faceInFocus and jerseyInFocus and confidence >= 0.7 then
+                                    table.insert(validJerseyNumbers, jerseyNum)
+                                    log:trace("✓ Jersey #" .. tostring(jerseyNum) .. " meets all face/focus criteria: " .. reasoning)
+                                else
+                                    log:trace("✗ Jersey #" .. tostring(jerseyNum) .. " rejected - missing face/focus criteria")
+                                end
+                            else
+                                -- Standard mode - only require confidence threshold
+                                if confidence >= 0.8 then
+                                    table.insert(validJerseyNumbers, jerseyNum)
+                                    log:trace("✓ Jersey #" .. tostring(jerseyNum) .. " meets criteria (confidence " .. confidence .. "): " .. reasoning)
+                                else
+                                    log:trace("✗ Jersey #" .. tostring(jerseyNum) .. " rejected - low confidence (" .. confidence .. ")")
+                                end
+                            end
+                        end
+                    end
+                else
+                    -- Fallback to old format if no detections array
+                    validJerseyNumbers = jerseyNumbers or {}
+                    log:trace("Using fallback jersey detection (no face validation)")
+                end
+                
+                if validJerseyNumbers and #validJerseyNumbers > 0 then
+                    log:trace("Valid jersey numbers after face validation: " .. table.concat(validJerseyNumbers, ", "))
+                    
+                    for _, jerseyNum in ipairs(validJerseyNumbers) do
                         -- Generate hierarchical keywords for this jersey number
                         local playerKeywords = PlayerRoster.generateKeywords(jerseyNum)
                         
@@ -281,7 +349,7 @@ local function exportAndAnalyzePhoto(photo, progressScope)
             end
             
             -- Add hierarchical player keywords (Fusion > 2016BN5 > Player > Jersey#)
-            if jerseyNumbers and #jerseyNumbers > 0 then
+            if validJerseyNumbers and #validJerseyNumbers > 0 then
                 catalog:withWriteAccessDo("Create player hierarchy", function()
                     -- Create Fusion root keyword
                     local fusionKeyword = catalog:createKeyword("Fusion", {}, false, nil, true)
@@ -289,8 +357,8 @@ local function exportAndAnalyzePhoto(photo, progressScope)
                     -- Create 2016BN5 under Fusion
                     local ageGroupKeyword = catalog:createKeyword("2016BN5", {}, false, fusionKeyword, true)
                     
-                    -- For each detected jersey number, create player hierarchy
-                    for _, jerseyNum in ipairs(jerseyNumbers) do
+                    -- For each validated jersey number, create player hierarchy
+                    for _, jerseyNum in ipairs(validJerseyNumbers) do
                         local playerName, cleanNumber = PlayerRoster.getPlayerName(jerseyNum)
                         if playerName and cleanNumber then
                             -- Create player name under age group

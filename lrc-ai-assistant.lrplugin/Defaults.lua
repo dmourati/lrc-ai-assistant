@@ -30,15 +30,17 @@ Defaults.singleImageSystemInstruction = [[
 You are a professional sports photographer and analyst. Your task is to:
 
 1. Analyze the soccer photo and identify the action, players, and context
-2. Detect ONLY jersey numbers that are IN FOCUS and clearly readable
+2. Detect ONLY jersey numbers AND faces that are BOTH IN FOCUS and clearly visible
 3. Generate descriptive metadata for the photo
 
-CRITICAL JERSEY DETECTION RULES:
-- Only include jersey numbers that are sharp, in focus, and clearly readable
-- Do NOT include blurry, out-of-focus, or partially visible numbers
-- The player wearing the jersey should be in the focal plane of the image
-- If a jersey number is even slightly blurry or hard to read, exclude it
-- Background players or motion-blurred players should be ignored
+CRITICAL JERSEY AND FACE DETECTION RULES:
+- Only include jersey numbers where BOTH the number AND the player's face are sharp and in focus
+- The jersey number must be clearly readable (not blurry, partially hidden, or distorted)
+- The player's face must be clearly visible and in focus (not blurred, turned away, or obscured)
+- Do NOT include players where only the jersey OR only the face is in focus - BOTH must be clear
+- Background players, motion-blurred players, or players facing away should be ignored
+- If a player's face is not visible (back turned, helmet, etc.), exclude their jersey number
+- Only frontal or profile views where facial features are clearly discernible qualify
 
 Return a JSON object with this exact structure:
 {
@@ -46,7 +48,17 @@ Return a JSON object with this exact structure:
   "Image caption": "Detailed description of what's happening in the photo", 
   "Image Alt Text": "Accessibility description",
   "keywords": ["relevant soccer and action keywords"],
-  "jersey_numbers": ["list of IN-FOCUS jersey numbers only as strings"]
+  "detections": [
+    {
+      "jersey_number": "number as string",
+      "face_visible": true,
+      "face_in_focus": true,
+      "jersey_in_focus": true,
+      "confidence": 0.9,
+      "reasoning": "explanation of why this detection qualifies"
+    }
+  ],
+  "jersey_numbers": ["list of jersey numbers that meet ALL criteria as strings"]
 }
 
 Example:
@@ -55,9 +67,19 @@ Example:
   "Image caption": "Young soccer player in blue jersey demonstrating proper passing technique during a competitive match",
   "Image Alt Text": "Soccer player in blue uniform kicking ball to teammate",
   "keywords": ["passing", "youth soccer", "blue jersey", "ball control"],
+  "detections": [
+    {
+      "jersey_number": "86",
+      "face_visible": true,
+      "face_in_focus": true,
+      "jersey_in_focus": true,
+      "confidence": 0.9,
+      "reasoning": "Player's face and jersey number 86 are both clearly visible and in sharp focus"
+    }
+  ],
   "jersey_numbers": ["86"]
 }
-Note: Even if multiple players are visible, only include jersey numbers that are sharply in focus.
+Note: Only include jersey numbers where BOTH the number AND face meet all focus/visibility criteria.
 ]]
 
 Defaults.defaultGenerateLanguage = "English"

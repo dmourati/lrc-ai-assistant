@@ -362,6 +362,8 @@ function AnalyzeImageProvider.showPreflightDialog(ctx)
     propertyTable.submitGPS = prefs.submitGPS
     propertyTable.submitKeywords = prefs.submitKeywords
     propertyTable.forceReprocess = prefs.forceReprocess
+    propertyTable.requireFaceDetection = prefs.requireFaceDetection or false
+    propertyTable.clearAllKeywords = prefs.clearAllKeywords or false
 
     propertyTable.temperature = prefs.temperature
 
@@ -590,6 +592,35 @@ function AnalyzeImageProvider.showPreflightDialog(ctx)
                 width = share 'labelWidth',
             },
         },
+        f:row {
+            f:static_text {
+                title = "",
+                width = share 'labelWidth',
+            },
+            f:checkbox {
+                value = bind 'clearAllKeywords',
+                width = share 'checkboxWidth'
+            },
+            f:static_text {
+                title = "Clear all existing keywords before processing",
+                width = share 'labelWidth',
+            },
+        },
+        f:row {
+            f:static_text {
+                title = "Face detection:",
+                width = share 'labelWidth',
+                alignment = "right",
+            },
+            f:checkbox {
+                value = bind 'requireFaceDetection',
+                width = share 'checkboxWidth'
+            },
+            f:static_text {
+                title = "Require face detection for player keywords",
+                width = share 'labelWidth',
+            },
+        },
     }
 
     local result = LrDialogs.presentModalDialog({
@@ -618,6 +649,8 @@ function AnalyzeImageProvider.showPreflightDialog(ctx)
         prefs.submitGPS = propertyTable.submitGPS
         prefs.submitKeywords = propertyTable.submitKeywords
         prefs.forceReprocess = propertyTable.forceReprocess
+        prefs.requireFaceDetection = propertyTable.requireFaceDetection
+        prefs.clearAllKeywords = propertyTable.clearAllKeywords
 
         prefs.temperature = propertyTable.temperature
 
