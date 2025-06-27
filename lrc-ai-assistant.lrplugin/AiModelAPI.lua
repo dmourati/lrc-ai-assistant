@@ -95,7 +95,7 @@ function AiModelAPI.addKeywordHierarchyToSystemInstruction()
         systemInstruction = prefs.prompts[prefs.prompt] or Defaults.singleImageSystemInstruction
     end
     
-    if prefs.useKeywordHierarchy and #keywords >= 1 then
+    if prefs.useKeywordHierarchy and #keywords >= 1 and prefs.prompt ~= "Soccer Single Image Analysis" then
         systemInstruction = systemInstruction .. "\nPut the keywords in the following categories:"
         for _, keyword in ipairs(keywords) do
             systemInstruction = systemInstruction .. "\n * " .. keyword
