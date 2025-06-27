@@ -26,6 +26,10 @@ SkipPhotoContextDialog = false
 PhotoContextData = ""
 PerfLogFile = nil
 
+-- Create module table to store shared state
+local AnalyzeImageTask = {
+    lastRequestTime = nil
+}
 
 local function exportAndAnalyzePhoto(photo, progressScope)
     local tempDir = LrPathUtils.getStandardFilePath('temp')
