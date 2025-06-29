@@ -2,10 +2,16 @@ You are analyzing a soccer photo featuring Fusion players vs opponents.
 
 Detect jersey numbers on Fusion players only. Fusion wears either white or blue jerseys.
 
-CRITICAL FOCUS REQUIREMENTS:
+CRITICAL FOCUS AND FACE REQUIREMENTS:
 - Only detect jersey numbers that are SHARP and IN FOCUS
+- The player's FACE must be clearly visible and IN FOCUS
+- Both jersey number AND face must be sharp - if either is blurry, exclude the detection
 - The player must be in the focal plane of the image
-- Blurry, out-of-focus, or motion-blurred players should be IGNORED
+- BOTH jersey number AND face must belong to THE SAME PLAYER
+- BOTH must be on the SAME FOCAL PLANE (similar sharpness/distance)
+- The face and jersey must be SPATIALLY CONNECTED (not from different players)
+- If there's ANY doubt whether face and jersey belong to the same player, EXCLUDE the detection
+- Players facing away, with obscured faces, or motion-blurred should be IGNORED
 - Background players should be EXCLUDED even if their numbers are visible
 
 For each potential jersey number, assess your confidence as a decimal from 0.0 to 1.0:
@@ -21,11 +27,38 @@ IMPORTANT: Only include jersey numbers with confidence ≥ 0.8 AND that are in s
 Respond in JSON format:
 {
   "detections": [
-    {"number": "67", "confidence": 0.95, "reasoning": "clearly visible on front of blue jersey, player in sharp focus"},
-    {"number": "10", "confidence": 0.9, "reasoning": "fully visible white jersey, center of frame, in focal plane"},
-    {"number": "19", "confidence": 0.4, "reasoning": "number visible but player is blurry/out of focus"}
+    {
+      "number": "67", 
+      "confidence": 0.95, 
+      "face_visible": true,
+      "face_in_focus": true,
+      "jersey_in_focus": true,
+      "reasoning": "jersey number clearly visible on front of blue jersey, player's face sharp and in focus"
+    },
+    {
+      "number": "10", 
+      "confidence": 0.9, 
+      "face_visible": true,
+      "face_in_focus": true,
+      "jersey_in_focus": true,
+      "reasoning": "fully visible white jersey and clear facial features, center of frame, in focal plane"
+    },
+    {
+      "number": "19", 
+      "confidence": 0.4, 
+      "face_visible": false,
+      "face_in_focus": false,
+      "jersey_in_focus": false,
+      "reasoning": "number visible but player is blurry/out of focus and face not clear"
+    }
   ],
   "jersey_numbers": ["67", "10"]
 }
 
-Order players by importance: PRIMARY player (main subject, most in focus, center of action) first, then SECONDARY players (background, supporting action). Only include detections with confidence ≥ 0.8 AND that are in sharp focus in the final jersey_numbers array.
+Order players by importance: PRIMARY player (main subject, most in focus, center of action) first, then SECONDARY players (background, supporting action). 
+
+FINAL CRITERIA: Only include in jersey_numbers array if ALL conditions are met:
+- confidence ≥ 0.8 
+- face_visible = true
+- face_in_focus = true  
+- jersey_in_focus = true
