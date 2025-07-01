@@ -7,8 +7,8 @@ local RateLimitManager = {}
 RateLimitManager.tokenUsage = {
     lastReset = os.time(),
     tokensUsed = 0,
-    tokenLimit = 200000,  -- OpenAI's TPM limit for gpt-4o-mini
-    resetInterval = 60    -- 60 seconds (1 minute)
+    tokenLimit = 4000000,  -- OpenAI Tier 3 TPM limit for gpt-4o-mini (4M tokens/minute)
+    resetInterval = 60     -- 60 seconds (1 minute)
 }
 
 -- Request tracking
