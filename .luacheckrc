@@ -30,6 +30,17 @@ globals = {
     "PhotoContextData",
     "PerfLogFile",
     "AnalyzeImageProvider",
+    
+    -- API classes
+    "OllamaAPI",
+    "ChatGptAPI",
+    "GeminiAPI",
+    "LmStudioAPI",
+    "AssistantAPI",
+    "AiModelAPI",
+    
+    -- Other globals
+    "Defaults",
 }
 
 -- Standard Lua globals

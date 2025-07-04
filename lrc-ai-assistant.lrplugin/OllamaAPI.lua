@@ -1,9 +1,8 @@
 require 'Defaults'
 local LrHttp = import 'LrHttp'
-local LrFileUtils = import 'LrFileUtils'
-local LrPathUtils = import 'LrPathUtils'
 local JSON = require 'JSON'
 local ResponseStructure = require 'ResponseStructure'
+local Util = require 'Util'
 
 OllamaAPI = {}
 OllamaAPI.__index = OllamaAPI
