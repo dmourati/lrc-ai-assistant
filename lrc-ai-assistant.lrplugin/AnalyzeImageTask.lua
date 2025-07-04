@@ -12,7 +12,6 @@ local LrDialogs = import 'LrDialogs'
 
 -- Required modules
 local AiModelAPI = require 'AiModelAPI'
-local Util = require 'Util'
 local PlayerRoster = require 'PlayerRoster'
 
 -- Module will be loaded when needed to avoid initialization issues
@@ -32,7 +31,7 @@ local AnalyzeImageTask = {
     isRunning = false  -- Execution lock
 }
 
-local function exportAndAnalyzePhoto(photo, progressScope)
+local function exportAndAnalyzePhoto(photo, progressScope) -- luacheck: ignore progressScope
     local tempDir = LrPathUtils.getStandardFilePath('temp')
     local photoName = LrPathUtils.leafName(photo:getFormattedMetadata('fileName'))
     local catalog = LrApplication.activeCatalog()
@@ -106,6 +105,7 @@ local function exportAndAnalyzePhoto(photo, progressScope)
         return false, 0, 0, "fatal"
     end
 
+    -- luacheck: ignore 512
     for _, rendition in exportSession:renditions() do
         local success, path = rendition:waitForRender()
         local metadata = {}
@@ -126,7 +126,7 @@ local function exportAndAnalyzePhoto(photo, progressScope)
                     end
                 end
                 metadata.context = PhotoContextData
-                catalog:withPrivateWriteAccessDo(function(context)
+                catalog:withPrivateWriteAccessDo(function(context) -- luacheck: ignore context
                         log:trace("Saving photo context data to metadata.")
                         photo:setPropertyForPlugin(_PLUGIN, 'photoContext', PhotoContextData)
                     end
@@ -387,10 +387,10 @@ local function exportAndAnalyzePhoto(photo, progressScope)
             LrFileUtils.delete(path)
 
             -- Save metadata informations to catalog.
-            catalog:withPrivateWriteAccessDo(function(context)
+            catalog:withPrivateWriteAccessDo(function(context) -- luacheck: ignore context
                     log:trace("Save AI run model and date to metadata")
                     photo:setPropertyForPlugin(_PLUGIN, 'aiModel', prefs.ai)
-                    local offset, daylight = LrDate.timeZone()
+                    local offset = LrDate.timeZone()
                     local lastRunDateTime = LrDate.timeToW3CDate(LrDate.currentTime() + offset)
                     photo:setPropertyForPlugin(_PLUGIN, 'aiLastRun', lastRunDateTime)
                 end
