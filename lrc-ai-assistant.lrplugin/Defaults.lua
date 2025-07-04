@@ -1,5 +1,7 @@
 -- lrc-ai-assistant.lrplugin/Defaults.lua
 
+local Util = require 'Util'
+
 Defaults = {}
 
 Defaults.openai_api_key = ""

@@ -1,6 +1,7 @@
 local LrHttp = import 'LrHttp'
 local LrDialogs = import 'LrDialogs'
 local JSON = require 'JSON'
+local Util = require 'Util'
 
 UpdateCheck = {}
 

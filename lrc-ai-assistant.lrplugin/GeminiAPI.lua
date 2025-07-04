@@ -12,6 +12,11 @@ local Util
 GeminiAPI.__index = GeminiAPI
 
 function GeminiAPI:new()
+    -- Load Util when needed
+    if not Util then
+        Util = require 'Util'
+    end
+    
     local o = setmetatable({}, GeminiAPI)
     self.rateLimitHit = 0
 

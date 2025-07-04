@@ -1,5 +1,6 @@
 
 require 'Defaults'
+local Util = require 'Util'
 
 ResponseStructure = {}
 ResponseStructure.__index = ResponseStructure
@@ -65,9 +66,12 @@ function ResponseStructure:generateResponseStructure()
                         properties = {
                             number = { type = self.strString },
                             confidence = { type = "number" },
+                            face_visible = { type = "boolean" },
+                            face_in_focus = { type = "boolean" },
+                            jersey_in_focus = { type = "boolean" },
                             reasoning = { type = self.strString }
                         },
-                        required = {"number", "confidence", "reasoning"},
+                        required = {"number", "confidence", "face_visible", "face_in_focus", "jersey_in_focus", "reasoning"},
                         additionalProperties = false
                     }
                 },

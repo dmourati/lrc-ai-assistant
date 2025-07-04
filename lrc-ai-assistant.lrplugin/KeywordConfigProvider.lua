@@ -1,4 +1,5 @@
 require 'Defaults'
+local Util = require 'Util'
 
 KeywordConfigProvider = {}
 

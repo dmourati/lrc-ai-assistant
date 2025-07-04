@@ -1,5 +1,6 @@
 
 require 'Defaults'
+local Util = require 'Util'
 local GeminiAPI = require 'GeminiAPI'
 local ChatGptAPI = require 'ChatGptAPI'
 local OllamaAPI = require 'OllamaAPI'

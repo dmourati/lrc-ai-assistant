@@ -1,4 +1,5 @@
 require 'Defaults'
+local Util = require 'Util'
 local LrHttp = import 'LrHttp'
 local LrFileUtils = import 'LrFileUtils'
 local LrPathUtils = import 'LrPathUtils'
