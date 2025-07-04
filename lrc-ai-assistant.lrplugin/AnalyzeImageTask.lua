@@ -28,7 +28,8 @@ PerfLogFile = nil
 
 -- Create module table to store shared state
 local AnalyzeImageTask = {
-    lastRequestTime = nil
+    lastRequestTime = nil,
+    isRunning = false  -- Execution lock
 }
 
 local function exportAndAnalyzePhoto(photo, progressScope)
@@ -160,6 +161,8 @@ local function exportAndAnalyzePhoto(photo, progressScope)
             end
 
             local title, caption, keywords, altText, jerseyNumbers
+            local validJerseyNumbers = {}  -- Move outside conditional scope
+            
             if result ~= nil and analyzeSuccess then
                 keywords = result.keywords or {}
                 title = result["Image title"]
@@ -169,7 +172,6 @@ local function exportAndAnalyzePhoto(photo, progressScope)
                 
                 -- Process jersey numbers with face validation and generate hierarchical player keywords
                 local playerHierarchicalKeywords = {}
-                local validJerseyNumbers = {}
                 
                 -- First, validate detections if available (new format)
                 local detections = result["detections"] or {}
@@ -280,7 +282,9 @@ local function exportAndAnalyzePhoto(photo, progressScope)
                     end
                 end
                 
-                log:trace("Final keywords: " .. (keywords and table.concat(keywords, ", ") or "none"))
+                if keywords and #keywords > 0 then
+                    log:trace("Final keywords: " .. table.concat(keywords, ", "))
+                end
             end
 
             local canceledByUser = false
@@ -366,7 +370,12 @@ local function exportAndAnalyzePhoto(photo, progressScope)
                             
                             -- Create jersey number under player name and add to photo
                             local jerseyKeyword = catalog:createKeyword("#" .. cleanNumber, {}, true, playerKeyword, true)
-                            photo:addKeyword(jerseyKeyword)
+                            
+                            -- Add the entire hierarchy chain to the photo
+                            photo:addKeyword(fusionKeyword)      -- Add Fusion root
+                            photo:addKeyword(ageGroupKeyword)    -- Add 2016BN5
+                            photo:addKeyword(playerKeyword)      -- Add player name
+                            photo:addKeyword(jerseyKeyword)      -- Add jersey number
                             
                             log:trace("Created hierarchy: Fusion > 2016BN5 > " .. playerName .. " > #" .. cleanNumber)
                         end
@@ -427,7 +436,16 @@ LrTasks.startAsyncTask(function()
             log:trace("Randomized order of " .. #selectedPhotos .. " photos")
         end
 
-        log:trace("Starting AnalyzeImageTask")
+        -- Check if another instance is already running
+        if AnalyzeImageTask.isRunning then
+            LrDialogs.showError("AI Analysis is already running. Please wait for the current batch to complete before starting another.")
+            log:trace("Blocked concurrent execution - analysis already in progress")
+            return false
+        end
+        
+        -- Set execution lock
+        AnalyzeImageTask.isRunning = true
+        log:trace("Starting AnalyzeImageTask (execution lock acquired)")
 
         if prefs.perfLogging then
             local path = LrPathUtils.child(LrPathUtils.getStandardFilePath("desktop"), "perflog.csv")
@@ -438,11 +456,13 @@ LrTasks.startAsyncTask(function()
         end
 
         if #selectedPhotos == 0 then
+            AnalyzeImageTask.isRunning = false
             LrDialogs.showError("Please select at least one photo.")
             return
         end
 
         if not prefs.generateCaption and not prefs.generateTitle and not prefs.generateKeywords and not prefs.generateAltText then
+            AnalyzeImageTask.isRunning = false
             LrDialogs.showError("Nothing selected to generate, check add-on manager settings.")
             return
         end
@@ -450,6 +470,7 @@ LrTasks.startAsyncTask(function()
         if prefs.showPreflightDialog then
             local preflightResult = AnalyzeImageProvider.showPreflightDialog(context)
             if not preflightResult then
+                AnalyzeImageTask.isRunning = false
                 log:trace("Canceled by preflight dialog")
                 return false
             end
@@ -486,11 +507,13 @@ LrTasks.startAsyncTask(function()
                 if cause == "fatal" then
                     log:trace("Fatal error received. Stopping.")
                     progressScope:setCaption("Failed to analyze photo with AI " .. tostring(i))
+                    AnalyzeImageTask.isRunning = false
                     LrDialogs.showError("Fatal error: Cannot continue. Check logs.")
                     AnalyzeImageProvider.showUsedTokensDialog(totalInputTokens, totalOutputTokens)
                     return false
                 elseif cause == "canceled" then
                     log:trace("Canceled by user validation dialog.")
+                    AnalyzeImageTask.isRunning = false
                     AnalyzeImageProvider.showUsedTokensDialog(totalInputTokens, totalOutputTokens)
                     return false
                 end
@@ -501,6 +524,7 @@ LrTasks.startAsyncTask(function()
             progressScope:setPortionComplete(i, totalPhotos)
             if progressScope:isCanceled() then
                 log:trace("We got canceled.")
+                AnalyzeImageTask.isRunning = false
                 AnalyzeImageProvider.showUsedTokensDialog(totalInputTokens, totalOutputTokens)
                 return false
             end
@@ -523,5 +547,9 @@ LrTasks.startAsyncTask(function()
             end
             LrDialogs.message("Failed photos:\n" .. (errorList or ""))
         end
+        
+        -- Release execution lock
+        AnalyzeImageTask.isRunning = false
+        log:trace("AnalyzeImageTask completed (execution lock released)")
     end)
 end)
